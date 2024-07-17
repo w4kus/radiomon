@@ -4,5 +4,6 @@ project('dmr-mon', 'cpp',
 	meson_version : '>= 0.60.0')
 
 zmq_deps = dependency('libzmq', version: '>= 4.3.4')
+fftw_deps = dependency('fftw3', version: '>= 3.3.8')
 
 subdir('src')
