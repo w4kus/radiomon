@@ -10,7 +10,7 @@ namespace dmr {
 
     // 4800 baud
     // 1ms = 4.8 sym per msec = 9.6 bpms
-    static const int        SAMPLES_PER_SYMBOL              = 5;    // 24Ksps
+    static const int        SAMPLES_PER_SYMBOL              = 5;    // 24KS/s
 
     // 5ms sync / embedded signal word
     static const int        SYNC_WORD_SIZE_BITS             = 48;

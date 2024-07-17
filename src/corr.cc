@@ -26,22 +26,33 @@ corr::corr() : m_Running(true),
                m_SymBuffBurstStart(nullptr),
                m_SymBuffEnd(nullptr),
                m_SymBuffCount(0),
+               m_FFTFwdPlan(nullptr),
+               m_FFTBackPlan(nullptr),
                m_IsCorrelated(false)
 {
-
-    // These can throw an exception
-    buildSymTable();
-    std::thread(&corr::handleSymbols, this).detach();
+    commonStartup();
 }
 
-corr::corr(mode_t mode) : m_Running(true),
+corr::corr(mode_t mode, convolve_t convType) :
                m_Mode(mode),
                m_SymbolRingBuff(SYMBOL_Q_SIZE),
                m_SymBuffP(nullptr),
                m_SymBuffBurstStart(nullptr),
                m_SymBuffEnd(nullptr),
                m_SymBuffCount(0),
+               m_FFTFwdPlan(nullptr),
+               m_FFTBackPlan(nullptr),
                m_IsCorrelated(false)
+{
+    if (convType == CONVOLVE_FFT)
+    {
+S
+    }
+
+    commonStartup();
+}
+
+void corr::commonStartup()
 {
     // These can throw an exception
     buildSymTable();
@@ -152,9 +163,6 @@ size_t corr::next(size_t n)
     return 0;
 }
 
-#if 0
-#endif
-
 // TEMP DEBUG
 void corr::test()
 {
@@ -162,7 +170,7 @@ void corr::test()
     std::FILE *f = std::fopen("test-corr.txt", "w");
     symbol_t *srcTab = (symbol_t *)sym_table_bs_source_data;
 
-    log::log::getInst()->trace(log::CORR, "Starting test\n");
+    log::getInst()->trace(log::CORR, "Starting test\n");
 
     for (int i=0;i < SYNC_WORD_SYMBOL_NUM;i++)
     {
@@ -182,7 +190,7 @@ void corr::test()
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define MAX(X, Y) (((X) < (Y)) ? (Y) : (X))
-int corr::directConvolve()
+symbol_t corr::directConvolve()
 {
     int i, j, corr_start, sync_start, sync_end;
 
@@ -208,80 +216,7 @@ int corr::directConvolve()
     return 0;
 }
 
-#if 0
-int corr::directConvolve()
-{
-    int i, j, diff;
-
-    // symbol_t result;
-    memset(testBuff, 0, sizeof(testBuff));
-    std::FILE *f = std::fopen("conv-test.txt", "w");
-
-    for (i=0;i < CONVOLVE_SIZE;i++)
-    {
-        testBuff[i] = 0;
-
-        for (j=0;j < SYNC_WORD_SIZE;j++)
-        {
-            diff = i - j;
-
-            if ((diff >= 0) && (diff <= SYNC_WORD_SIZE))
-                testBuff[i] += m_CorrBuff[j] * m_SyncTab[diff];
-        }
-
-        std::fprintf(f, "%.04f,", testBuff[i]);
-    }
-
-    std::fprintf(f, "\n");
-    std::fclose(f);
-
-    return 0;
-}
-
-void convolve(const double Signal[/* SignalLen */], size_t SignalLen,
-              const double Kernel[/* KernelLen */], size_t KernelLen,
-              double Result[/* SignalLen + KernelLen - 1 */])
-{
-  size_t n;
-
-  for (n = 0; n < SignalLen + KernelLen - 1; n++)
-  {
-    size_t kmin, kmax, k;
-
-    Result[n] = 0;
-
-    kmin = (n >= KernelLen - 1) ? n - (KernelLen - 1) : 0;
-    kmax = (n < SignalLen - 1) ? n : SignalLen - 1;
-
-    for (k = kmin; k <= kmax; k++)
-    {
-      Result[n] += Signal[k] * Kernel[n - k];
-    }
-  }
-}
-float* convolve(float h[], float x[], int lenH, int lenX, int* lenY)
-{
-  int nconv = lenH+lenX-1;
-  (*lenY) = nconv;
-  int i,j,h_start,x_start,x_end;
-
-  float *y = (float*) calloc(nconv, sizeof(float));
-
-  for (i=0; i<nconv; i++)
-  {
-    x_start = MAX(0,i-lenH+1);
-    x_end   = MIN(i+1,lenX);
-    h_start = MIN(i,lenH-1);
-    for(j=x_start; j<x_end; j++)
-    {
-      y[i] += h[h_start--]*x[j];
-    }
-  }
-  return y;
-}
-#endif
-
-int corr::fftConvolve()
+symbol_t corr::fftConvolve()
 {
     return 0;
 }

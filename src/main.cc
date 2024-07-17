@@ -14,8 +14,12 @@ int main(int argc, char **args)
 {
     int ret(0);
 
-    dmr::SetLogActiveMods(dmr::ALL);
+    dmr::log::getInst()->SetLogActiveMods(dmr::log::ALL);
 
+#if 1
+    dmr::corr corr;
+    corr.test();
+#else
     try
     {
         zmq::context_t ctx;
@@ -26,7 +30,7 @@ int main(int argc, char **args)
 
         sock.connect("tcp://localhost:55000");
 
-        dmr::trace(dmr::MAIN, "Waiting for data...\n");
+        dmr::log::getInst()->trace(dmr::log::MAIN, "Waiting for data...\n");
 
         while(1)
         {
@@ -36,12 +40,12 @@ int main(int argc, char **args)
             {
                 int sz = res.value().size / sizeof(dmr::symbol_t);
 
-                dmr::trace(dmr::MAIN, "\n:: %d\n", sz);
+                dmr::log::getInst()->trace(dmr::log::MAIN, "\n:: %d\n", sz);
 
                 auto *p = (dmr::symbol_t *)mBuff.data();
 
                 for (int i=0;i < sz;i++)
-                    dmr::trace(dmr::MAIN, "%.04f\n", *p++);
+                    dmr::log::getInst()->trace(dmr::log::MAIN, "%.04f\n", *p++);
             }
             else
             {
@@ -49,8 +53,6 @@ int main(int argc, char **args)
                 break;
             }
         }
-
-        sock.close();
     }
     catch(zmq::error_t &err)
     {
@@ -62,6 +64,7 @@ int main(int argc, char **args)
         fprintf(stderr, "DMR Error: %s\n", err.what());
         ret = err.code;
     }
+#endif
 
     return ret;
 }
