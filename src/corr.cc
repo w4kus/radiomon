@@ -46,7 +46,7 @@ corr::corr(mode_t mode, convolve_t convType) :
 {
     if (convType == CONVOLVE_FFT)
     {
-S
+
     }
 
     commonStartup();
