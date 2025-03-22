@@ -1,4 +1,4 @@
-#include "corr.h"
+#include "sync.h"
 #include "log.h"
 #include <cstring>
 #include <boost/assert.hpp>
@@ -16,7 +16,7 @@ using namespace dmr;
 //
 // Normalized BS source voice sync symbol table
 const symbol_t sym_table_bs_source_voice[] =
-{ 
+{
     +1, -1, +1, +1,     // 75
     +1, +1, -1, -1,     // 5F
     -1, +1, +1, -1,     // D7

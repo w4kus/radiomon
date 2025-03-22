@@ -4,9 +4,8 @@ project('dmr-mon', 'cpp',
 	meson_version : '>= 0.60.0')
 
 zmq_deps = dependency('libzmq', version: '>= 4.3.0')
-boost_dep = dependency('boost')
 
-inc = include_directories([ 'src', 'test', 'utils' ])
+inc = include_directories([ 'src', 'test', 'utils', 'src/dmr' ])
 
 subdir('src')
 subdir('test')

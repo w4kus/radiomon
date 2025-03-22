@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <cstring>
 #include <thread>
-#include "corr.h"
+#include "sync.h"
 #include "cmdline.h"
 #include "log.h"
 

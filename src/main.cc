@@ -3,7 +3,7 @@
 #include <getopt.h>
 
 #include "dmr-mon.h"
-#include "corr.h"
+#include "sync.h"
 #include "log.h"
 
 #define MSEC(x) (x*1000)

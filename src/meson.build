@@ -1,9 +1,9 @@
 sources = ['main.cc',
-                    'corr.cc',
                     'log.cc',
-                    meson.project_source_root() + '/utils/cmdline.cc']
+                    meson.project_source_root() + '/utils/cmdline.cc',
+                    meson.project_source_root() + '/src/dmr/sync.cc' ]
 
-# FIXME - boost option needs to be removed if the dist has it already
+
 executable('dmr-mon', sources,
-    dependencies: [zmq_deps, boost_dep],
+    dependencies: [zmq_deps ],
     include_directories : [ inc ])
