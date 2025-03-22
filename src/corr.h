@@ -1,83 +1,114 @@
 #pragma once
 
-#include <boost/lockfree/spsc_queue.hpp>
-#include <thread>
-#include <fftw3.h>
+#include "ring-buffer.h"
 #include "dmr-mon.h"
+#include <functional>
 
 namespace dmr {
 
 class corr
 {
 public:
-    enum mode_t
+    typedef enum
     {
         MODE_BS,    // correlate base station signals
-        MODE_MS     // correlate mobile station signals
-    };
+        MODE_MS,    // correlate mobile station signals
+        MODE_TS1,   // correlate direct TS1 signals
+        MODE_TS2,   // correlate direct TS2 signals
+        MODE_MAX
+    }frame_t;
 
-    enum convolve_t
-    {
-        CONVOLVE_DIRECT,
-        CONVOLVE_FFT
-    };
+    typedef std::function<void(int size, uint8_t *buff)> corr_callback_t;
 
-    corr();         // defauls to BS signals, direct convolution
-    corr(mode_t mode, convolve_t convType);
+    corr();
+    corr(corr_callback_t cb);
+    corr(frame_t mode, bool test = false);
+    corr(frame_t mode, corr_callback_t cb, bool test = false);
 
     virtual ~corr();
 
     corr(const corr&) = delete;
     corr& operator=(const corr&) = delete;
 
-    const int SYMBOL_Q_SIZE     = 1024;
-
-    void pushSymbols(std::size_t size, float *syms)
+    void pushSymbols(std::size_t size, symbol_t *syms)
     {
-        m_SymbolRingBuff.push(syms, size);
+        m_SymbolRingBuff.pushBuffer(syms, size);
     }
 
-    // TEMP DEBUG
-    void test();
+    void changeMode(mode_t newMode);
 
-private:
+protected:
 
-    bool m_Running;
+    enum sync_state_t
+    {
+        ST_SEARCH,
+        ST_SYNC,
+    };
+
+    int m_Running;
     mode_t m_Mode;
+    sync_state_t m_State;
 
-    boost::lockfree::spsc_queue<symbol_t> m_SymbolRingBuff;
+    util::ring_buffer<symbol_t> m_SymbolRingBuff;
 
-    static const int SYMBUFF_SIZE = TDMA_FRAME_SYMBOL_NUM * SAMPLES_PER_SYMBOL * 2;
-    static const int SYNC_WORD_SIZE = SYNC_WORD_SYMBOL_NUM * SAMPLES_PER_SYMBOL;
-    static const int CONVOLVE_SIZE = SYNC_WORD_SIZE * 2 - 1;
+    static constexpr int SYNC_WORD_SIZE     = SYNC_WORD_SYMBOL_NUM * SAMPLES_PER_SYMBOL;
+    static constexpr int XCORR_SIZE         = SYNC_WORD_SIZE * 2 - 1;
+    static constexpr int FRAME_SIZE         = BURST_FRAME_SYMBOL_NUM * SAMPLES_PER_SYMBOL;
+    static constexpr int CORR_BUFF_SIZE     = FRAME_SIZE * 2;
+    static constexpr int PAYLOAD_SIZE       = BURST_PAYLOAD_SECT_SYMBOL_NUM * SAMPLES_PER_SYMBOL;
+
+    static constexpr symbol_t SYNC_ERROR    = PERCENT_TO_VALUE(3.0f);
+    static constexpr symbol_t XCORR_MAX     = (symbol_t)SYNC_WORD_SIZE + (symbol_t)(SYNC_WORD_SIZE * SYNC_ERROR);
+    static constexpr symbol_t XCORR_MIN     = (symbol_t)SYNC_WORD_SIZE - (symbol_t)(SYNC_WORD_SIZE * SYNC_ERROR);
+    static constexpr symbol_t SYNC_MAX      = 0.0f + (symbol_t)(1.0f * SYNC_ERROR);
+    static constexpr symbol_t SYNC_MIN      = 0.0f - (symbol_t)(1.0f * SYNC_ERROR);
 
     symbol_t m_SyncTab[SYNC_WORD_SIZE];
-    symbol_t m_CorrBuff[CONVOLVE_SIZE];
+    symbol_t m_CorrBuff[CORR_BUFF_SIZE];
+    symbol_t m_SyncSum;
+    symbol_t m_CurrSym;
+    size_t   m_CorrBuffCount;
 
-    symbol_t *m_SymBuffP;
-    symbol_t *m_SymBuffBurstStart;
-    symbol_t *m_SymBuffEnd;
-    symbol_t m_SymBuff[SYMBUFF_SIZE];
-    size_t m_SymBuffCount;
-    fftw_plan m_FFTFwdPlan;
-    fftw_plan m_FFTBackPlan;
+    uint16_t m_CorrBuffIdxW;
+    uint16_t m_CorrBuffIdxR;
 
-    bool m_IsCorrelated;
+    corr_callback_t m_DecodeCB;
 
     void buildSymTable();
     void commonStartup();
+    void stopThread();
 
-    size_t next(size_t n = 1);
     bool correlate();
-    bool accum();
+    void startSync();
+    bool inSync();
     void decode();
 
-    symbol_t directConvolve();
-    symbol_t fftConvolve();
+    static bool isInPosRange(const symbol_t sym, const symbol_t max, const symbol_t min)
+    {
+        return (sym >= min) && (sym <= max);
+    }
+
+    static bool isInNegRange(symbol_t sym, const symbol_t max, const symbol_t min)
+    {
+        return (sym <= -min) && (sym >= -max);
+    }
+
+    static bool isSumInRange(symbol_t sum)
+    {
+        return (sum >= SYNC_MIN) && (sum <= SYNC_MAX);
+    }
+
+    virtual void xcorr(symbol_t *buff, symbol_t &max, symbol_t &min);
+
+private:
 
     static void handleSymbols(corr *inst);
-
-    symbol_t testBuff[CONVOLVE_SIZE];
 };
 
 }
+
+// For unit testing and such
+extern const dmr::symbol_t sym_table_bs_source_voice[];
+extern const dmr::symbol_t sym_table_ms_source_voice[];
+extern const dmr::symbol_t sym_table_direct_ts1_voice[];
+extern const dmr::symbol_t sym_table_direct_ts2_voice[];

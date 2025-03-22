@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <zmq.hpp>
+#include <getopt.h>
 
 #include "dmr-mon.h"
 #include "corr.h"
@@ -7,30 +8,39 @@
 
 #define MSEC(x) (x*1000)
 
-const int RX_BUFF_SIZE = dmr::TDMA_FRAME_SYMBOL_NUM * dmr::SAMPLES_PER_SYMBOL;
-static dmr::symbol_t rxBuff[RX_BUFF_SIZE];
+static dmr::symbol_t rxBuff[128];
+
+typedef struct
+{
+    bool dumpSamples;
+}app_data_t;
+
+static app_data_t app_data;
+
+static void decode_callback(int corrRes, uint8_t *decRes);
+static bool parseCmdLine(int argc, char **argv);
 
 int main(int argc, char **args)
 {
     int ret(0);
+    dmr::corr synchronize(dmr::corr::MODE_BS, (dmr::corr::corr_callback_t)&decode_callback);
+
+    if (!parseCmdLine(argc, args))
+        return -1;
 
     dmr::log::getInst()->SetLogActiveMods(dmr::log::ALL);
 
-#if 1
-    dmr::corr corr;
-    corr.test();
-#else
     try
     {
         zmq::context_t ctx;
         zmq::socket_t sock(ctx, ZMQ_PULL);
-        zmq::mutable_buffer mBuff(rxBuff, RX_BUFF_SIZE * sizeof(dmr::symbol_t));
+        zmq::mutable_buffer mBuff(rxBuff, sizeof(rxBuff) * sizeof(dmr::symbol_t));
         zmq::recv_buffer_result_t res;
-        dmr::corr corr;
 
+        // Fixme - make this an argument
         sock.connect("tcp://localhost:55000");
 
-        dmr::log::getInst()->trace(dmr::log::MAIN, "Waiting for data...\n");
+        TRACE(dmr::log::MAIN, "Waiting for data...\n");
 
         while(1)
         {
@@ -39,13 +49,17 @@ int main(int argc, char **args)
             if (res.has_value())
             {
                 int sz = res.value().size / sizeof(dmr::symbol_t);
-
-                dmr::log::getInst()->trace(dmr::log::MAIN, "\n:: %d\n", sz);
-
                 auto *p = (dmr::symbol_t *)mBuff.data();
 
-                for (int i=0;i < sz;i++)
-                    dmr::log::getInst()->trace(dmr::log::MAIN, "%.04f\n", *p++);
+                if (app_data.dumpSamples)
+                {
+                    TRACE(dmr::log::MAIN, "\n:: %d\n", sz);
+
+                    for (int i=0;i < sz;i++)
+                        TRACE(dmr::log::MAIN, "%.04f\n", *p++);
+                }
+                else
+                    synchronize.pushSymbols(sz, p);
             }
             else
             {
@@ -59,12 +73,38 @@ int main(int argc, char **args)
         fprintf(stderr, "ZMQ Error: %s\n", err.what());
         ret = -1;
     }
-    catch(dmr::error &err)
+    catch(dmr::util::ringbuffexception &err)
     {
-        fprintf(stderr, "DMR Error: %s\n", err.what());
-        ret = err.code;
+        fprintf(stderr, "ring_buffer Error: %s\n", err.what());
+        ret = -1;
     }
-#endif
+
+    return ret;
+}
+
+static void decode_callback(int corrRes, uint8_t *decRes)
+{
+    TRACE(dmr::log::MAIN, "decode - %d\n", corrRes);
+}
+
+static bool parseCmdLine(int argc, char **argv)
+{
+    int opt;
+    bool ret = true;
+
+    while((opt = getopt_long(argc, argv, "d", nullptr, nullptr)) != -1)
+    {
+        switch (opt)
+        {
+            case 'd':
+                app_data.dumpSamples = true;
+                break;
+
+            case '?':
+                printf("FIXME - print help\n");
+                ret = false;
+        }
+    }
 
     return ret;
 }

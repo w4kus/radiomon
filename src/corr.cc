@@ -1,222 +1,345 @@
 #include "corr.h"
 #include "log.h"
 #include <cstring>
+#include <boost/assert.hpp>
+#include <thread>
+#include <unistd.h>
 
-// BS source sync: data (compliment: voice)
-//   D      F      F      5     7      D      7      5      D      F      5       D
-// -3 +3 -3 -3  -3 -3  +3 +3  +3 -3  -3 +3  +3 -3  +3 +3  -3 +3  -3 -3  +3 +3  -3 +3
-//
-// Normalized data sync symbol table
-const dmr::symbol_t sym_table_bs_source_data[] = 
-{ 
-    -1, +1, -1, -1,     // DF
-    -1, -1, +1, +1,     // F5
-    +1, -1, -1, +1,     // 7D
-    +1, -1, +1, +1,     // 75
-    -1, +1, -1, -1,     // DF
-    +1, +1, -1, +1      // 5D
-};
+#define DEBUG(fmt,...) TRACE(dmr::log::CORR, fmt, ##__VA_ARGS__)
 
 using namespace dmr;
 
-corr::corr() : m_Running(true),
+
+// BS source sync: voice (compliment: data)
+//   7      5      5      F     D      7      D      F      7      5      F       7
+// +3 -3 +3 +3  +3 +3  -3 -3  -3 +3  +3 -3  -3 +3  -3 -3  +3 -3  +3 +3  -3 -3  +3 -3
+//
+// Normalized BS source voice sync symbol table
+const symbol_t sym_table_bs_source_voice[] =
+{ 
+    +1, -1, +1, +1,     // 75
+    +1, +1, -1, -1,     // 5F
+    -1, +1, +1, -1,     // D7
+    -1, +1, -1, -1,     // DF
+    +1, -1, +1, +1,     // 75
+    -1, -1, +1, -1      // F7
+};
+
+// MS source sync: voice (compliment: data)
+//   7      F      7      D      5      D     D      5      7      D      F      D
+// +3 -3  -3 -3  +3 -3  -3 +3  +3 +3  -3 +3 -3 +3  +3 +3  +3 -3  -3 +3  -3 -3  -3 +3
+//
+// Normalized MS source voice sync symbol table
+const symbol_t sym_table_ms_source_voice[] =
+{
+    +1, -1, -1, -1,     // 7F
+    +1, -1, -1, +1,     // 7D
+    +1, +1, -1, +1,     // 5D
+    -1, +1, +1, +1,     // D5
+    +1, -1, -1, +1,     // 7D
+    -1, -1, -1, +1      // FD
+};
+
+// Direct mode voice - TS1 (compliment: data)
+//    5     D       5     7       7     F       7      7    5      7      F     F
+// +3 +3  -3 +3  +3 +3  +3 -3  +3 -3  -3 -3  +3 -3  +3 -3 +3 +3  +3 -3 -3 -3  -3 -3
+//
+// Normalized TS1 direct mode
+const symbol_t sym_table_direct_ts1_voice[] =
+{
+    +1, +1, -1, +1,     // 5D
+    +1, +1, +1, -1,     // 57
+    +1, -1, -1, -1,     // 7F
+    +1, -1, +1, -1,     // 77
+    +1, +1, +1, -1,     // 57
+    -1, -1, -1, -1      // FF
+};
+
+// Direct mode voice - TS2 (compliment: data)
+//    7      D      F     F       D      5      F      5      5      D      5      F
+// +3 -3  -3 +3  -3 -3  -3 -3  -3 +3  +3 +3  -3 -3  +3 +3  +3 +3  -3 +3  +3 +3  -3 -3
+//
+// Normalized TS2 direct mode
+const symbol_t sym_table_direct_ts2_voice[] =
+{
+    +1, -1, -1, +1,     // 7D
+    -1, -1, -1, -1,     // FF
+    -1, +1, +1, +1,     // D5
+    -1, -1, +1, +1,     // F5
+    +1, +1, -1, +1,     // 5D
+    +1, +1, -1, -1      // 5F
+};
+
+const symbol_t *symbolTabLookup[corr::MODE_MAX] =
+{
+    [corr::MODE_BS]   = sym_table_bs_source_voice,
+    [corr::MODE_MS]   = sym_table_ms_source_voice,
+    [corr::MODE_TS1]  = sym_table_direct_ts1_voice,
+    [corr::MODE_TS2]  = sym_table_direct_ts2_voice
+};
+
+corr::corr() : m_Running(2),
                m_Mode(MODE_BS),
-               m_SymbolRingBuff(SYMBOL_Q_SIZE),
-               m_SymBuffP(nullptr),
-               m_SymBuffBurstStart(nullptr),
-               m_SymBuffEnd(nullptr),
-               m_SymBuffCount(0),
-               m_FFTFwdPlan(nullptr),
-               m_FFTBackPlan(nullptr),
-               m_IsCorrelated(false)
+               m_State(ST_SEARCH),
+               m_SymbolRingBuff(10),
+               m_SyncSum(0),
+               m_CorrBuffCount(0),
+               m_CorrBuffIdxW(0),
+               m_CorrBuffIdxR(0),
+               m_DecodeCB(nullptr)
 {
     commonStartup();
 }
 
-corr::corr(mode_t mode, convolve_t convType) :
-               m_Mode(mode),
-               m_SymbolRingBuff(SYMBOL_Q_SIZE),
-               m_SymBuffP(nullptr),
-               m_SymBuffBurstStart(nullptr),
-               m_SymBuffEnd(nullptr),
-               m_SymBuffCount(0),
-               m_FFTFwdPlan(nullptr),
-               m_FFTBackPlan(nullptr),
-               m_IsCorrelated(false)
+corr::corr(corr_callback_t cb) :    m_Running(2),
+                                    m_Mode(MODE_BS),
+                                    m_State(ST_SEARCH),
+                                    m_SymbolRingBuff(10),
+                                    m_SyncSum(0),
+                                    m_CorrBuffCount(0),
+                                    m_CorrBuffIdxW(0),
+                                    m_CorrBuffIdxR(0),
+                                    m_DecodeCB(cb)
 {
-    if (convType == CONVOLVE_FFT)
-    {
-
-    }
-
     commonStartup();
 }
 
-void corr::commonStartup()
+corr::corr(frame_t mode, bool test) :    m_Running(2),
+                                        m_Mode(mode),
+                                        m_State(ST_SEARCH),
+                                        m_SymbolRingBuff(10),
+                                        m_SyncSum(0),
+                                        m_CorrBuffCount(0),
+                                        m_CorrBuffIdxW(0),
+                                        m_CorrBuffIdxR(0),
+                                        m_DecodeCB(nullptr)
 {
-    // These can throw an exception
-    buildSymTable();
-    std::thread(&corr::handleSymbols, this).detach();
+    commonStartup();
+}
+
+corr::corr(frame_t mode, corr_callback_t cb, bool test) :    m_Running(2),
+                                                            m_Mode(mode),
+                                                            m_State(ST_SEARCH),
+                                                            m_SymbolRingBuff(10),
+                                                            m_SyncSum(0),
+                                                            m_CorrBuffCount(0),
+                                                            m_CorrBuffIdxW(0),
+                                                            m_CorrBuffIdxR(0),
+                                                            m_DecodeCB(cb)
+{
+    commonStartup();
 }
 
 corr::~corr()
 {
-    m_Running = false;
+    stopThread();
+}
+
+void corr::commonStartup()
+{
+    // These can throw an excepm_SyncSumtion
+    buildSymTable();
+    std::thread(corr::handleSymbols, this).detach();
 }
 
 void corr::buildSymTable()
 {
-    // generate the sync symbol table in reverse order for correlation
-    int dstIdx = 0, srcIdx = SYNC_WORD_SYMBOL_NUM - 1;
+    int dstIdx = 0, srcIdx = 0;
+    auto *srcTab = symbolTabLookup[m_Mode];
 
-    symbol_t *srcTab = nullptr;
-
-    switch(m_Mode)
-    {
-        case MODE_BS:
-            srcTab = (symbol_t *)sym_table_bs_source_data;
-            break;
-
-        default:
-            throw error("Mode is not supported right now");
-    }
-
-    std::FILE *f = std::fopen("test_sync.txt", "w");
     for (int i=0;i < SYNC_WORD_SYMBOL_NUM;i++)
     {
         for (int j=0;j < SAMPLES_PER_SYMBOL;j++)
-        {
             m_SyncTab[dstIdx++] = srcTab[srcIdx];
-            std::fprintf(f, "%.04f,", srcTab[srcIdx]);
-        }
         
-        --srcIdx;
+        ++srcIdx;
     }
 
-    std::fclose(f);
+    std::memset(m_CorrBuff, 0, sizeof(m_CorrBuff));
+}
 
-    m_SymBuffP = m_SymBuff;
-    m_SymBuffEnd = &m_SymBuff[SYMBUFF_SIZE];
+void corr::stopThread()
+{
+    m_Running = 1;
+    m_SymbolRingBuff.setBreak();
+
+    while(m_Running)
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+}
+
+void corr::changeMode(mode_t newMode)
+{
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-// Thread context
+// Local thread context
 void corr::handleSymbols(corr *inst)
 {
-    log::getInst()->trace(log::CORR, "searching...\n");
+    DEBUG("searching...\n");
 
-    while(inst->m_Running)
+    while(inst->m_Running == 2)
     {
-        if (inst->m_SymbolRingBuff.pop(*(inst->m_SymBuffP)))
+        for (int i=0;i < 8;i++)
         {
-            ++inst->m_SymBuffCount;
-
-            if (inst->m_SymBuffCount >= SYNC_WORD_SIZE)
+            if (inst->m_State == ST_SEARCH)
             {
-                if (!inst->m_IsCorrelated)
+                if (inst->correlate())
                 {
-                    if (inst->correlate())
-                    {
-                        log::getInst()->trace(log::CORR, "Correlated!\n");
-                        inst->m_IsCorrelated = true;
-                    }
-                }
-                else
-                {
-                    // accumulate the remainder of the data burst
-                    if (inst->accum())
-                    {
-                        // Send burst to decoder and continue
-                        inst->decode();
-                        log::getInst()->trace(log::CORR, "Searching...\n");
-                        inst->m_IsCorrelated = false;
-                    }
+                    inst->m_State = ST_SYNC;
+                    inst->startSync();
+                    TRACE(log::CORR, "ST_SYNC\n");
                 }
             }
-
-            inst->m_SymBuffCount = inst->next();
+            else
+            {
+                if (inst->inSync())
+                {
+                    inst->decode();
+                    inst->m_State = ST_SEARCH;
+                    TRACE(log::CORR, "ST_SEARCH\n");
+                }
+            }
         }
-        else
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+
+    inst->m_Running = 0;
 }
 
 bool corr::correlate()
 {
-    // Build the correlation buffer
+    bool ret = false;
+    symbol_t min = 0, max = 0;
 
-    return false;
+    auto sym = m_SymbolRingBuff.pop();
+
+    m_CorrBuff[m_CorrBuffIdxW++] = sym;
+    ++m_CorrBuffCount;
+
+    if (m_CorrBuffIdxW == CORR_BUFF_SIZE)
+        m_CorrBuffIdxW = 0;
+
+    if (m_CorrBuffCount > CORR_BUFF_SIZE)
+    {
+        ++m_CorrBuffIdxR;
+        if (m_CorrBuffIdxR == CORR_BUFF_SIZE)
+            m_CorrBuffIdxR = 0;
+
+        --m_CorrBuffCount;
+    }
+
+    if (m_CorrBuffCount >= SYNC_WORD_SIZE)
+    {
+        int diff = m_CorrBuffIdxW - SYNC_WORD_SIZE;
+        int idx = 0;
+        symbol_t *p, *q, sum = 0;
+
+        if (diff >= 0)
+            idx = diff;
+        else
+            idx = CORR_BUFF_SIZE - m_CorrBuffIdxW - 1;
+
+        p = q = &m_CorrBuff[idx];
+
+        auto *buff = new symbol_t[XCORR_SIZE]();
+        auto *buffEnd = &m_CorrBuff[CORR_BUFF_SIZE];
+
+        for (int i=0;i < SYNC_WORD_SIZE;i++)
+        {
+            buff[i] = *p;
+            sum += *p++;
+
+            if (p == buffEnd)
+                p = m_CorrBuff;
+        }
+
+        if (isSumInRange(sum))
+        {
+            // DEBUG("Checking sync [%.2f]\n", sum);
+
+            xcorr(buff, min, max);
+
+            if (isInPosRange(SYNC_WORD_SIZE, min, max))
+            {
+                DEBUG("---pos sync found [%.2f %.2f]\n", min, max);
+                ret = true;
+            }
+            else if (isInNegRange(SYNC_WORD_SIZE, min, max))
+            {
+                DEBUG("---neg sync found [%.2f %.2f]\n", min, max);
+                ret = true;
+            }
+        }
+
+        delete[] buff;
+    }
+
+    return ret;
 }
 
-bool corr::accum()
+void corr::startSync()
 {
+#if 0
+    int diff = m_CorrBuffIdxR - PAYLOAD_SIZE;
+
+    if (diff >= 0)
+        m_CorrBuffIdxR = diff;
+    else
+        m_CorrBuffIdxR = CORR_BUFF_SIZE + diff - 1;
+
+    m_CorrBuffCount += PAYLOAD_SIZE + SYNC_WORD_SIZE;
+#endif
+}
+
+bool corr::inSync()
+{
+#if 0
+    bool ret = false;
+
+    m_CorrBuff[m_CorrBuffIdxW++] = m_SymbolRingBuff.pop();
+    ++m_CorrBuffCount;
+
+    if (m_CorrBuffIdxW == CORR_BUFF_SIZE)
+        m_CorrBuffIdxW = 0;
+
+    if (m_CorrBuffCount == FRAME_SIZE)
+        ret = true;
+
+    return ret;
+#else
+    m_CorrBuffIdxR = m_CorrBuffIdxW;
+    m_CorrBuffCount = 0;
     return true;
+#endif
 }
 
 void corr::decode()
 {
+    m_CorrBuffIdxR = m_CorrBuffIdxW;
 
+    if (m_DecodeCB)
+        m_DecodeCB(0, nullptr);
 }
 
-size_t corr::next(size_t n)
+void corr::xcorr(symbol_t *buff, symbol_t &max, symbol_t &min)
 {
-    return 0;
-}
+    auto *res = new symbol_t[XCORR_SIZE]();
 
-// TEMP DEBUG
-void corr::test()
-{
-    int dstIdx = 0, srcIdx = 0;
-    std::FILE *f = std::fopen("test-corr.txt", "w");
-    symbol_t *srcTab = (symbol_t *)sym_table_bs_source_data;
-
-    log::getInst()->trace(log::CORR, "Starting test\n");
-
-    for (int i=0;i < SYNC_WORD_SYMBOL_NUM;i++)
+    for (int lag = 0; lag < XCORR_SIZE; lag++)
     {
-        for (int j=0;j < SAMPLES_PER_SYMBOL;j++)
+        for (int i = 0; i < XCORR_SIZE; i++)
         {
-            std::fprintf(f, "%.04f,", srcTab[srcIdx]);
-            m_CorrBuff[dstIdx++] = srcTab[srcIdx];
+            int j = i - lag + XCORR_SIZE - 1;
+
+            // The symbol and sync buffers are the same size so no
+            // bounds check is needed here (e.g., autocorrelation)
+            res[lag] += buff[i] * m_SyncTab[j];
+
+            if (res[lag] < min)
+                min = res[lag];
+            else if (res[lag] > max)
+                max = res[lag];
         }
-
-        ++srcIdx;
     }
 
-    std::fclose(f);
-
-    directConvolve();
-}
-
-#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
-#define MAX(X, Y) (((X) < (Y)) ? (Y) : (X))
-symbol_t corr::directConvolve()
-{
-    int i, j, corr_start, sync_start, sync_end;
-
-    // symbol_t result;
-    memset(testBuff, 0, sizeof(testBuff));
-    std::FILE *f = std::fopen("conv-test.txt", "w");
-
-    for (i=0; i < CONVOLVE_SIZE; i++)
-    {
-        sync_start = MAX(0, i - SYNC_WORD_SIZE + 1);
-        sync_end   = MIN(i + 1, SYNC_WORD_SIZE);
-        corr_start = MIN(i, SYNC_WORD_SIZE - 1);
-
-        for(j = sync_start; j < sync_end; j++)
-            testBuff[i] += m_CorrBuff[corr_start--] * m_SyncTab[j];
-
-        std::fprintf(f, "%.04f,", testBuff[i]);
-    }
-
-    std::fprintf(f, "\n");
-    std::fclose(f);
-
-    return 0;
-}
-
-symbol_t corr::fftConvolve()
-{
-    return 0;
+    delete[] res;
 }

@@ -2,6 +2,10 @@
 
 #include <memory>
 #include <chrono>
+#include <mutex>
+#include "timer.h"
+
+#define TRACE dmr::log::getInst()->trace
 
 namespace dmr {
 
@@ -17,8 +21,6 @@ public:
         ALL = MAIN | CORR
     }modname_t;
 
-    typedef std::chrono::steady_clock::time_point timer_t;
-
     static auto &getInst()
     {
         static std::shared_ptr<log> p{ new log };
@@ -28,23 +30,31 @@ public:
     log(const log&) = delete;
     log& operator=(const log&) = delete;
 
+    void SetLogActiveMods(modname_t mod)
+    {
+        std::unique_lock<std::mutex> lck(m_Mtx);
+        m_ActiveModes |= (uint8_t)mod;
+    }
+
+    void ClearLogActiveMods(modname_t mod)
+    {
+        std::unique_lock<std::mutex> lck(m_Mtx);
+        m_ActiveModes &= (uint8_t)mod;
+    }
+
 private:
 
     log() : m_ActiveModes(0)
     {
-        m_Start = std::chrono::steady_clock::now();
+        m_Start = util::timer::StartTimer();
     }
 
     uint8_t m_ActiveModes;
-    timer_t m_Start;
+    util::timer::timer_t m_Start;
+    std::mutex m_Mtx;
 
 public:
-    void SetLogActiveMods(modname_t mod);
 
     void trace(modname_t mod, const char *fmt, ...);
-
-    timer_t StartTimer();
-    uint32_t EndTimer(timer_t tmr);
 };
-
 }

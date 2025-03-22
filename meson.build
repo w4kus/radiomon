@@ -1,4 +1,4 @@
-project('dmr-mon', 'cpp', 
+project('dmr-mon', 'cpp',
 	version : '0.0.1',
 	license : 'GPL3',
 	meson_version : '>= 0.60.0')
