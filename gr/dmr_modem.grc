@@ -72,7 +72,7 @@ blocks:
     bus_structure: null
     coordinate: [928, 12.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: fsk_deviation_hz
   id: variable
   parameters:
@@ -137,8 +137,8 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 223, 245, 125, 117,
-      223, 93, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+    value: (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 223, 245, 125, 117,
+      223, 93, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
   states:
     bus_sink: false
     bus_source: false
@@ -150,8 +150,8 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 223, 245, 125, 117, 223,
-      93, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    value: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 223, 245, 125, 117, 223,
+      93, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
   states:
     bus_sink: false
     bus_source: false
@@ -173,7 +173,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [80, 252.0]
+    coordinate: [80, 284.0]
     rotation: 0
     state: disabled
 - name: analog_frequency_modulator_fc_0
@@ -224,7 +224,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [32, 308.0]
+    coordinate: [32, 332.0]
     rotation: 0
     state: disabled
 - name: blocks_message_debug_0
@@ -315,7 +315,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [40, 164.0]
+    coordinate: [72, 204.0]
     rotation: 0
     state: enabled
 - name: channels_channel_model_0
