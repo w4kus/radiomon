@@ -2,11 +2,12 @@
 
 #include "ring-buffer.h"
 #include "dmr-mon.h"
+#include "peak.h"
 #include <functional>
 
 namespace dmr {
 
-class corr
+class sync
 {
 public:
     typedef enum
@@ -20,15 +21,15 @@ public:
 
     typedef std::function<void(int size, uint8_t *buff)> corr_callback_t;
 
-    corr();
-    corr(corr_callback_t cb);
-    corr(frame_t mode, bool test = false);
-    corr(frame_t mode, corr_callback_t cb, bool test = false);
+    sync();
+    sync(corr_callback_t cb);
+    sync(frame_t mode, bool test = false);
+    sync(frame_t mode, corr_callback_t cb, bool test = false);
 
-    virtual ~corr();
+    virtual ~sync();
 
-    corr(const corr&) = delete;
-    corr& operator=(const corr&) = delete;
+    sync(const sync&) = delete;
+    sync& operator=(const sync&) = delete;
 
     void pushSymbols(std::size_t size, symbol_t *syms)
     {
@@ -48,6 +49,8 @@ protected:
     int m_Running;
     mode_t m_Mode;
     sync_state_t m_State;
+
+    util::peak<symbol_t> m_Peak;
 
     util::ring_buffer<symbol_t> m_SymbolRingBuff;
 
@@ -102,7 +105,7 @@ protected:
 
 private:
 
-    static void handleSymbols(corr *inst);
+    static void handleSymbols(sync *inst);
 };
 
 }

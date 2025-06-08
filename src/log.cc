@@ -7,7 +7,7 @@
 const char *mod_tags[] =
 {
     "MAIN",
-    "CORR"
+    "SYNC"
 };
 
 #define TAG_SIZE    (sizeof(mod_tags) / sizeof(mod_tags[0]))

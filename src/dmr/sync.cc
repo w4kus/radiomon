@@ -4,8 +4,9 @@
 #include <boost/assert.hpp>
 #include <thread>
 #include <unistd.h>
+#include <memory>
 
-#define DEBUG(fmt,...) TRACE(dmr::log::CORR, fmt, ##__VA_ARGS__)
+#define DEBUG(fmt,...) TRACE(dmr::log::SYNC, fmt, ##__VA_ARGS__)
 
 using namespace dmr;
 
@@ -70,15 +71,15 @@ const symbol_t sym_table_direct_ts2_voice[] =
     +1, +1, -1, -1      // 5F
 };
 
-const symbol_t *symbolTabLookup[corr::MODE_MAX] =
+const symbol_t *symbolTabLookup[sync::MODE_MAX] =
 {
-    [corr::MODE_BS]   = sym_table_bs_source_voice,
-    [corr::MODE_MS]   = sym_table_ms_source_voice,
-    [corr::MODE_TS1]  = sym_table_direct_ts1_voice,
-    [corr::MODE_TS2]  = sym_table_direct_ts2_voice
+    [sync::MODE_BS]   = sym_table_bs_source_voice,
+    [sync::MODE_MS]   = sym_table_ms_source_voice,
+    [sync::MODE_TS1]  = sym_table_direct_ts1_voice,
+    [sync::MODE_TS2]  = sym_table_direct_ts2_voice
 };
 
-corr::corr() : m_Running(2),
+sync::sync() : m_Running(2),
                m_Mode(MODE_BS),
                m_State(ST_SEARCH),
                m_SymbolRingBuff(10),
@@ -91,7 +92,7 @@ corr::corr() : m_Running(2),
     commonStartup();
 }
 
-corr::corr(corr_callback_t cb) :    m_Running(2),
+sync::sync(corr_callback_t cb) :    m_Running(2),
                                     m_Mode(MODE_BS),
                                     m_State(ST_SEARCH),
                                     m_SymbolRingBuff(10),
@@ -104,7 +105,7 @@ corr::corr(corr_callback_t cb) :    m_Running(2),
     commonStartup();
 }
 
-corr::corr(frame_t mode, bool test) :    m_Running(2),
+sync::sync(frame_t mode, bool test) :   m_Running(2),
                                         m_Mode(mode),
                                         m_State(ST_SEARCH),
                                         m_SymbolRingBuff(10),
@@ -117,7 +118,7 @@ corr::corr(frame_t mode, bool test) :    m_Running(2),
     commonStartup();
 }
 
-corr::corr(frame_t mode, corr_callback_t cb, bool test) :    m_Running(2),
+sync::sync(frame_t mode, corr_callback_t cb, bool test) :   m_Running(2),
                                                             m_Mode(mode),
                                                             m_State(ST_SEARCH),
                                                             m_SymbolRingBuff(10),
@@ -130,19 +131,19 @@ corr::corr(frame_t mode, corr_callback_t cb, bool test) :    m_Running(2),
     commonStartup();
 }
 
-corr::~corr()
+sync::~sync()
 {
     stopThread();
 }
 
-void corr::commonStartup()
+void sync::commonStartup()
 {
     // These can throw an excepm_SyncSumtion
     buildSymTable();
-    std::thread(corr::handleSymbols, this).detach();
+    std::thread(sync::handleSymbols, this).detach();
 }
 
-void corr::buildSymTable()
+void sync::buildSymTable()
 {
     int dstIdx = 0, srcIdx = 0;
     auto *srcTab = symbolTabLookup[m_Mode];
@@ -158,7 +159,7 @@ void corr::buildSymTable()
     std::memset(m_CorrBuff, 0, sizeof(m_CorrBuff));
 }
 
-void corr::stopThread()
+void sync::stopThread()
 {
     m_Running = 1;
     m_SymbolRingBuff.setBreak();
@@ -167,13 +168,13 @@ void corr::stopThread()
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
-void corr::changeMode(mode_t newMode)
+void sync::changeMode(mode_t newMode)
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Local thread context
-void corr::handleSymbols(corr *inst)
+void sync::handleSymbols(sync *inst)
 {
     DEBUG("searching...\n");
 
@@ -187,7 +188,7 @@ void corr::handleSymbols(corr *inst)
                 {
                     inst->m_State = ST_SYNC;
                     inst->startSync();
-                    TRACE(log::CORR, "ST_SYNC\n");
+                    DEBUG("ST_SYNC\n");
                 }
             }
             else
@@ -196,7 +197,7 @@ void corr::handleSymbols(corr *inst)
                 {
                     inst->decode();
                     inst->m_State = ST_SEARCH;
-                    TRACE(log::CORR, "ST_SEARCH\n");
+                    DEBUG("ST_SEARCH\n");
                 }
             }
         }
@@ -205,7 +206,7 @@ void corr::handleSymbols(corr *inst)
     inst->m_Running = 0;
 }
 
-bool corr::correlate()
+bool sync::correlate()
 {
     bool ret = false;
     symbol_t min = 0, max = 0;
@@ -276,7 +277,7 @@ bool corr::correlate()
     return ret;
 }
 
-void corr::startSync()
+void sync::startSync()
 {
 #if 0
     int diff = m_CorrBuffIdxR - PAYLOAD_SIZE;
@@ -290,7 +291,7 @@ void corr::startSync()
 #endif
 }
 
-bool corr::inSync()
+bool sync::inSync()
 {
 #if 0
     bool ret = false;
@@ -312,7 +313,7 @@ bool corr::inSync()
 #endif
 }
 
-void corr::decode()
+void sync::decode()
 {
     m_CorrBuffIdxR = m_CorrBuffIdxW;
 
@@ -320,26 +321,24 @@ void corr::decode()
         m_DecodeCB(0, nullptr);
 }
 
-void corr::xcorr(symbol_t *buff, symbol_t &max, symbol_t &min)
+void sync::xcorr(symbol_t *buff, symbol_t &max, symbol_t &min)
 {
-    auto *res = new symbol_t[XCORR_SIZE]();
+    auto res = std::make_unique<symbol_t>(XCORR_SIZE);
 
-    for (int lag = 0; lag < XCORR_SIZE; lag++)
+    for (size_t lag = 0; lag < XCORR_SIZE; lag++)
     {
-        for (int i = 0; i < XCORR_SIZE; i++)
+        for (size_t i = 0; i < XCORR_SIZE; i++)
         {
-            int j = i - lag + XCORR_SIZE - 1;
+            size_t j = i - lag + XCORR_SIZE - 1;
 
             // The symbol and sync buffers are the same size so no
             // bounds check is needed here (e.g., autocorrelation)
-            res[lag] += buff[i] * m_SyncTab[j];
+            res.get()[lag] += buff[i] * m_SyncTab[j];
 
-            if (res[lag] < min)
-                min = res[lag];
-            else if (res[lag] > max)
-                max = res[lag];
+            if (res.get()[lag] < min)
+                min = res.get()[lag];
+            else if (res.get()[lag] > max)
+                max = res.get()[lag];
         }
     }
-
-    delete[] res;
 }

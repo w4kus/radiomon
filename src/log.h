@@ -16,9 +16,9 @@ public:
     typedef enum
     {
         MAIN = 1,
-        CORR = 2,
+        SYNC = 2,
 
-        ALL = MAIN | CORR
+        ALL = MAIN | SYNC
     }modname_t;
 
     static auto &getInst()

@@ -7,7 +7,6 @@
 
 #include <semaphore.h>
 
-namespace utils = dmr::util;
 using namespace dmr;
 
 const int SYNC_SIZE     = dmr::SYNC_WORD_SYMBOL_NUM * dmr::SAMPLES_PER_SYMBOL; 
@@ -29,7 +28,7 @@ static void test_callback(int corrRes, uint8_t *decRes);
 static symbol_t *testSig = nullptr;
 static int testSigSize;
 
-static corr testCorrelator(dmr::corr::MODE_BS, (corr::corr_callback_t)test_callback, true);
+static sync testCorrelator(dmr::sync::MODE_BS, (sync::corr_callback_t)test_callback, true);
 static uint8_t noiseCharIdx;
 
 static sem_t sem;
@@ -40,7 +39,7 @@ int main(int argc, char **argv)
     int numFrames = 2;
     int padSymNum = 32;
 
-    log::getInst()->SetLogActiveMods(log::CORR);
+    log::getInst()->SetLogActiveMods(log::SYNC);
 
     float sum = 0;
     for (int i=0;i < SYNC_WORD_SYMBOL_NUM;i++)
@@ -66,14 +65,14 @@ int main(int argc, char **argv)
 
     printf("TS2 voice sum=%.02f\n", sum);
 
-    auto str = utils::getCmdOption(argv, argv + argc, "-n");
+    auto str = util::getCmdOption(argv, argv + argc, "-n");
 
     if (str)
         numFrames = std::strtol(str, NULL, 10);
     
     printf("Number of frames: %d\n", numFrames);
 
-    str = utils::getCmdOption(argv, argv + argc, "-p");
+    str = util::getCmdOption(argv, argv + argc, "-p");
 
     if (str)
         padSymNum = std::strtol(str, NULL, 10);
@@ -81,7 +80,7 @@ int main(int argc, char **argv)
     testSigSize = (numFrames * (dmr::BURST_FRAME_SYMBOL_NUM * dmr::SAMPLES_PER_SYMBOL)) + (padSymNum * dmr::SAMPLES_PER_SYMBOL);
     testSig = new dmr::symbol_t[testSigSize]();
 
-    printf("TESTCORR: using %d symbol test signal with %d frames"
+    printf("TESTSYNC: using %d symbol test signal with %d frames"
             " and %d symbols of padding\n", testSigSize, numFrames, padSymNum);
 
     sem_init(&sem, 0, 1);
@@ -189,14 +188,14 @@ static void buildTestSig(int numFrames, int padSymNum, bool compliment)
 
 static void test_detect_voice(int numFrames, int padSymNum)
 {
-    printf("TESTCORR: testing voice sync\n");
+    printf("TESTSYNC: testing voice sync\n");
     buildTestSig(numFrames, padSymNum, false);
     test_wait(numFrames);
 }
 
 static void test_detect_data(int numFrames, int padSymNum)
 {
-    printf("TESTCORR: testing data sync\n");
+    printf("TESTSYNC: testing data sync\n");
     buildTestSig(numFrames, padSymNum, true);
     test_wait(numFrames);
 }
@@ -222,7 +221,7 @@ static void test_callback(int corrRes, uint8_t *decRes)
     static int count = 0;
 
     ++count;
-    printf("TESTCORR: %d syncs found\n", count);
+    printf("TESTSYNC: %d syncs found\n", count);
 
     sem_post(&sem);
 }
