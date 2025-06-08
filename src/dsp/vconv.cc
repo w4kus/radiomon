@@ -2,7 +2,7 @@
 #include <cstring>
 #include <vconv.h>
 
-std::vector<float> dsp::vconvolve(const float *b, const uint32_t m, const float *h, const uint32_t n)
+std::vector<float> dsp::vconvolve(const float *b, const size_t m, const float *h, const size_t n)
 {
     int len = m - n + 1;
 
@@ -36,7 +36,7 @@ std::vector<float> dsp::vconvolve(const float *b, const uint32_t m, const float 
     return res;
 }
 
-std::vector<std::complex<float>> dsp::vconvolve(const std::complex<float> *b, const uint32_t m, const float *h, const uint32_t n)
+std::vector<std::complex<float>> dsp::vconvolve(const std::complex<float> *b, const size_t m, const float *h, const size_t n)
 {
     int len = m - n + 1;
 

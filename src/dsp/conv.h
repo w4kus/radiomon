@@ -9,7 +9,7 @@ class conv
 {
 public:
 
-    std::vector<T> convolve(const T *b, const uint32_t m, const T *h, const uint32_t n)
+    std::vector<T> convolve(const T *b, const size_t m, const T *h, const size_t n)
     {
         int len = m - n + 1;
 
