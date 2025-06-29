@@ -1,3 +1,7 @@
+// Copyright (c) 2025 John Mark White -- US Amateur Radio License: W4KUS
+//
+// Licensed under the MIT License - see LICENSE file for details.
+
 #include <memory>
 #include <cmath>
 #include <stdio.h>
@@ -7,6 +11,9 @@
 #include "vconv.h"
 #include "conv.h"
 #include "conv_full.h"
+#include "fconv.h"
+#include "delay.h"
+#include "moving-avg.h"
 
 const float lp_test_6k_48k[65] = 
 {
@@ -31,94 +38,118 @@ const std::complex<float> lp_test_6k_48k_c[65] =
 	{-0.0001, 0}
 };
 
+constexpr int TEST_COEFF_SIZE   (65);
+constexpr int TEST_SIG_SIZE     (256);
+
+static std::vector<float> rsig;
+static std::vector<std::complex<float>> csig;
+
 static void testDirectReal(void);
 static void testDirectComplex(void);
-static void printComplex(FILE *f, std::complex<float> val);
+static void testDftReal(void);
+static void testDftComplex(void);
+static void printReal(FILE *f, std::vector<float>  &vals);
+static void printComplex(FILE *f, std::vector<std::complex<float>> &vals);
 
 int main(int argc, char **argvp)
 {
+    FILE *frsig = fopen("rsig.txt", "w");
+    FILE *fcsig = fopen("csig.txt", "w");
+
+    rsig.reserve(TEST_SIG_SIZE);
+    for (int i=0;i < TEST_SIG_SIZE;i++)
+        rsig.push_back(std::cos(2*M_PI*3.5*i/48));
+
+    printReal(frsig, rsig);
+
+    csig.reserve(TEST_SIG_SIZE);
+    for (int i=0;i < TEST_SIG_SIZE;i++)
+        csig.push_back({(float)std::cos(2*M_PI*3.5*i/48), (float)std::sin(2*M_PI*3.5*i/48)});
+
+    printComplex(fcsig, csig);
+
+    fclose(frsig);
+    fclose(fcsig);
+
     testDirectReal();
     testDirectComplex();
+    testDftReal();
+    testDftComplex();
 
     return 0;
 }
 
 static void testDirectReal(void)
 {
-    auto sig = std::make_unique<float[]>(256);
-    FILE *fsig = fopen("fsig.txt", "w");
-    FILE *fconv = fopen("ffilt.txt", "w");
+    FILE *f = fopen("dsp_vconv.txt", "w");
+    auto conv = dsp::vconvolve(rsig.data(), rsig.size(), lp_test_6k_48k, TEST_COEFF_SIZE);
+    printReal(f, conv);
+    fclose(f);
 
-    if (fsig && fconv)
-    {
-        for (int i=0;i < 256;i++)
-        {
-            sig[i] = std::cos(2*M_PI*2*i/48);
-            fprintf(fsig, "%0.4f ", sig[i]);
-        }
-    }
-    else
-    {
-        fprintf(stderr, "Can't open output files\n");
-        if (fsig) fclose(fsig);
-        if (fconv) fclose(fconv);
-        return;
-    }
-    
-    fclose(fsig);
+    f = fopen("dsp_conv.txt", "w");
+    conv = dsp::conv<float>().convolve(rsig.data(), rsig.size(), lp_test_6k_48k, TEST_COEFF_SIZE);
+    printReal(f, conv);
+    fclose(f);
 
-    auto vconv = dsp::vconvolve(sig.get(), 256, lp_test_6k_48k, 65);
-    // auto vconv = dsp::conv<float>().convolve(sig.get(), 256, lp_test_6k_48k, 65);
-    // auto vconv = dsp::conv_full<float>().convolve(sig.get(), 256, lp_test_6k_48k, 65);
-
-    for (int i=0;i < (int)vconv.size();i++)
-        fprintf(fconv, "%0.4f ", vconv[i]);
-
-    fclose(fconv);
+    f = fopen("dsp_conv_full.txt", "w");
+    conv = dsp::conv_full<float>().convolve(rsig.data(), rsig.size(), lp_test_6k_48k, TEST_COEFF_SIZE);
+    printReal(f, conv);
+    fclose(f);
 }
 
 static void testDirectComplex(void)
 {
-    auto sig = std::make_unique<std::complex<float>[]>(256);
-    FILE *fsig = fopen("cfsig.txt", "w");
-    FILE *fconv = fopen("cffilt.txt", "w");
+    FILE *f = fopen("dsp_vconv_c.txt", "w");
+    auto conv = dsp::vconvolve(csig.data(), csig.size(), lp_test_6k_48k, TEST_COEFF_SIZE);
+    printComplex(f, conv);
+    fclose(f);
 
-    if (fsig && fconv)
-    {
-        for (int i=0;i < 256;i++)
-        {
-            sig[i].real(std::cos(2*M_PI*3.5*i/48));
-            sig[i].imag(std::sin(2*M_PI*3.5*i/48));
-            printComplex(fsig, sig[i]);
-        }
-    }
-    else
-    {
-        fprintf(stderr, "Can't open output files\n");
-        if (fsig) fclose(fsig);
-        if (fconv) fclose(fconv);
-        return;
-    }
-    
-    fclose(fsig);
+    f = fopen("dsp_conv_c.txt", "w");
+    conv = dsp::conv<std::complex<float>>().convolve(csig.data(), csig.size(), lp_test_6k_48k_c, TEST_COEFF_SIZE);
+    printComplex(f, conv);
+    fclose(f);
 
-    auto vconv = dsp::vconvolve(sig.get(), 256, lp_test_6k_48k, 65);
-    // auto vconv = dsp::conv<std::complex<float>>().convolve(sig.get(), 256, lp_test_6k_48k_c, 65);
-    // auto vconv = dsp::conv_full<std::complex<float>>().convolve(sig.get(), 256, lp_test_6k_48k_c, 65);
-
-    for (int i=0;i < (int)vconv.size();i++)
-        printComplex(fconv, vconv[i]);
-
-    fclose(fconv);
+    f = fopen("dsp_conv_full_c.txt", "w");
+    conv = dsp::conv_full<std::complex<float>>().convolve(csig.data(), csig.size(), lp_test_6k_48k_c, TEST_COEFF_SIZE);
+    printComplex(f, conv);
+    fclose(f);
 }
 
-static void printComplex(FILE *f, std::complex<float> val)
+static void testDftReal(void)
+{
+    FILE *f = fopen("dsp_fconv.txt", "w");
+    auto dftconv = dsp::fconv(lp_test_6k_48k, TEST_COEFF_SIZE, TEST_SIG_SIZE);
+    auto conv = dftconv.convolve(rsig.data());
+    printReal(f, conv);
+    fclose(f);
+}
+
+static void testDftComplex(void)
+{
+    FILE *f = fopen("dsp_fconv_c.txt", "w");
+    auto dftconv = dsp::fconv(lp_test_6k_48k_c, TEST_COEFF_SIZE, TEST_SIG_SIZE);
+    auto conv = dftconv.convolve(csig.data());
+    printComplex(f, conv);
+    fclose(f);
+}
+
+static void printReal(FILE *f, std::vector<float>  &vals)
+{
+    for (std::vector<float>::iterator it = vals.begin(); it != vals.end(); ++it)
+        fprintf(f, "%0.4f ", *it);
+}
+
+static void printComplex(FILE *f, std::vector<std::complex<float>> &vals)
 {
     // v = cell2mat(textscan(f, "%f"))'
-    fprintf(f, "%f", val.real());
 
-    if (val.imag() >= 0)
-        fprintf(f, "+");
+    for (std::vector<std::complex<float>>::iterator it = vals.begin(); it != vals.end(); ++it)
+    {
+        fprintf(f, "%f", it->real());
 
-    fprintf(f, "%0.4fj ", val.imag());
+        if (it->imag() >= 0)
+            fprintf(f, "+");
+
+        fprintf(f, "%0.4fj ", it->imag());
+    }
 }
