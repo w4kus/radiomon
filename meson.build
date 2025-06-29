@@ -5,6 +5,7 @@ project('dmr-mon', 'cpp',
 
 zmq_deps = dependency('libzmq', version: '>= 4.3.0')
 volk_deps = dependency('volk', version:'>= 2.5')
+fftw_deps = dependency('fftw3f', version: '>= 3.0.0')
 
 inc = include_directories([ 'src', 'test', 'src/utils', 'src/dmr', 'src/dsp' ])
 
