@@ -1,9 +1,9 @@
 sources = ['main.cc',
                     'log.cc',
                     meson.project_source_root() + '/src/utils/cmdline.cc',
-                    meson.project_source_root() + '/src/dsp/vconv.cc',
+                    meson.project_source_root() + '/src/dsp/convolution/vconv.cc',
                     meson.project_source_root() + '/src/dmr/sync.cc',
-                    meson.project_source_root() + '/src/dsp/fconv.cc' ]
+                    meson.project_source_root() + '/src/dsp/convolution/fconv.cc' ]
 
 
 executable('dmr-mon', sources,
