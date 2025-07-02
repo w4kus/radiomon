@@ -8,6 +8,19 @@
 
 namespace dsp {
 
+/*! \brief Template for time domain convolution.
+ *
+ * This calculates the standard convolution of two sequences.  Given
+ * two sequences **b**, of size **m**, and **h**, of size **n**, this
+ * produces an output of size m + n - 1.
+ *
+ * The output is of type *std::vector<T>*.  It is expected that **T**
+ * be either a floating point type (e.g. *float*, *double*) or *std::complex<T>*
+ * but no restrctions are placed on it.
+ *
+ */
+
+
 template<typename T>
 class conv_full
 {
