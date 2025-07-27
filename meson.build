@@ -8,7 +8,7 @@ volk_deps = dependency('volk', version:'>= 2.5')
 fftw_deps = dependency('fftw3f', version: '>= 3.0.0')
 
 inc = include_directories(
-	[ 'src', 'test', 'src/utils', 'src/dmr', 'src/dsp/convolution' ])
+	[ 'src', 'test', 'src/utils', 'src/dmr', 'src/dsp/ops' ])
 
 subdir('src')
 subdir('test')
