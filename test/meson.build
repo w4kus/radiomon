@@ -4,3 +4,5 @@ test_sources = [  meson.project_source_root() + '/src/log.cc',
 
 subdir('sync')
 subdir('conv')
+subdir('corr')
+subdir('average')
