@@ -2,69 +2,207 @@
 //
 // Licensed under the MIT License - see LICENSE file for details.
 
+//! \file corr.cc
+
 #include <volk/volk.h>
 #include <cstring>
-#include <vconv.h>
+#include <corr.h>
+#include <cassert>
 
-std::vector<float> dsp::vconvolve(const float *b, const size_t m, const float *h, const size_t n)
+using namespace dsp;
+
+corr::corr(const size_t n, const buffer_t type) :
+    m_Type(type),
+    m_Size(n),
+    m_CountX(0),
+    m_CountY(0),
+    m_fX(nullptr),
+    m_fY(nullptr),
+    m_cX(nullptr),
+    m_cY(nullptr)
 {
-    int len = m - n + 1;
-
-    if (len <= 0)
-        return std::vector<float>(0);
-
-    size_t k = n + 1;
-    size_t min;
-
-    std::vector<float> res(len);
-
-    float *aligned_b_buff = (float *)volk_malloc(m * sizeof(float), volk_get_alignment());
-    float *aligned_h_buff  = (float *)volk_malloc(n * sizeof(float), volk_get_alignment());
-
-    std::memcpy(aligned_h_buff, h, n * sizeof(float));
-    std::memcpy(aligned_b_buff, b, m * sizeof(float));
-
-    for (size_t i=0;i < (size_t)len;i++, k++)
+    if (type == buffer_type_real)
     {
-        res[i] = 0;
-        min = k - n + 1;
-        volk_32f_x2_dot_prod_32f(&res[i], &aligned_b_buff[min], aligned_h_buff, n);
+        m_fX = (float *)volk_malloc(n * sizeof(float), volk_get_alignment());
+        m_fY = (float *)volk_malloc(n * sizeof(float), volk_get_alignment());
+    }
+    else
+    {
+        m_cX = (std::complex<float> *)volk_malloc(n * sizeof(std::complex<float>), volk_get_alignment());
+        m_cY = (std::complex<float> *)volk_malloc(n * sizeof(std::complex<float>), volk_get_alignment());
     }
 
-    volk_free(aligned_b_buff);
-    volk_free(aligned_h_buff);
+    resetX();
+    resetY();
+}
+
+corr::~corr()
+{
+    if (m_fX) volk_free(m_fX);
+    if (m_fY) volk_free(m_fY);
+    if (m_cX) volk_free(m_cX);
+    if (m_cY) volk_free(m_cY);
+}
+
+void corr::setX(const float *x)
+{
+    assert(m_fX != nullptr);
+
+    std::memcpy(m_fX, x, m_Size * sizeof(float));
+    m_CountX = 0;
+}
+
+void corr::setX(const std::complex<float> *x)
+{
+    assert(m_cX != nullptr);
+
+    for (size_t i=0;i < m_Size;i++)
+    {
+        m_cX[i].real(x[i].real());
+        m_cX[i].imag(x[i].imag());
+    }
+
+    m_CountX = 0;
+}
+
+void corr::setY(const float *y)
+{
+    assert(m_fY != nullptr);
+
+    std::memcpy(m_fY, y, m_Size * sizeof(float));
+    m_CountY = 0;
+}
+
+void corr::setY(const std::complex<float> *y)
+{
+    assert(m_cY != nullptr);
+
+    for (size_t i=0;i < m_Size;i++)
+    {
+        m_cY[i].real(y[i].real());
+        m_cY[i].imag(y[i].imag());
+    }
+
+    m_CountY = 0;
+}
+
+void corr::calculate(float &coeff)
+{
+    volk_32f_x2_dot_prod_32f(&coeff, m_fX, m_fY, m_Size);
+}
+
+void corr::calculate(std::complex<float> &coeff)
+{
+    volk_32fc_x2_dot_prod_32fc(&coeff, m_cX, m_cY, m_Size);
+}
+
+float corr::addX(const float x)
+{
+    assert(m_fX != nullptr);
+    return add(x, m_CountX, m_fX);
+}
+
+std::complex<float> corr::addX(const std::complex<float> x)
+{
+    assert(m_cX != nullptr);
+    return add(x, m_CountX, m_cX);
+}
+
+float corr::addY(const float y)
+{
+    assert(m_fY != nullptr);
+    return add(y, m_CountY, m_fY);
+}
+
+std::complex<float> corr::addY(const std::complex<float> y)
+{
+    assert(m_cY != nullptr);
+    return add(y, m_CountY, m_cY);
+}
+
+float corr::add(const float val, size_t &cnt, float *buff)
+{
+    float res = 0;
+
+    if (cnt == m_Size)
+    {
+        std::memmove(buff, &buff[1], (m_Size - 1) * sizeof(float));
+        buff[m_Size - 1] = val;
+    }
+    else
+        buff[cnt++] = val;
+
+    calculate(res);
 
     return res;
 }
 
-std::vector<std::complex<float>> dsp::vconvolve(const std::complex<float> *b, const size_t m, const float *h, const size_t n)
+std::complex<float> corr::add(const std::complex<float> val, size_t &cnt, std::complex<float> *buff)
 {
-    int len = m - n + 1;
+    std::complex<float> res;
 
-    if (len <= 0)
-        return std::vector<std::complex<float>>(0);
-
-    size_t k = n + 1;
-    size_t min;
-
-    std::vector<std::complex<float>> res(len);
-
-    std::complex<float> *aligned_b_buff = (std::complex<float> *)volk_malloc(m * sizeof(std::complex<float>), volk_get_alignment());
-    float *aligned_h_buff = (float *)volk_malloc(n * sizeof(float), volk_get_alignment());
-
-    std::memcpy(aligned_h_buff, h, n * sizeof(float));
-    std::memcpy(aligned_b_buff, b, m * sizeof(std::complex<float>));
-
-    for (size_t i=0;i < (size_t)len;i++, k++)
+    if (cnt == m_Size)
     {
-        res[i] = 0;
-        min = k - n + 1;
-        volk_32fc_32f_dot_prod_32fc(&res[i], &aligned_b_buff[min], aligned_h_buff, n);
+        for (size_t i=0;i < (m_Size - 2);i++)
+        {
+            buff[i].real(buff[i+1].real());
+            buff[i].imag(buff[i+1].imag());
+        }
+
+        buff[m_Size - 1].real(val.real());
+        buff[m_Size - 1].imag(val.imag());
+    }
+    else
+    {
+        buff[cnt].real(val.real());
+        buff[cnt++].imag(val.imag());
     }
 
-    volk_free(aligned_b_buff);
-    volk_free(aligned_h_buff);
+    calculate(res);
 
     return res;
 }
 
+void corr::resetX()
+{
+    zeroX();
+    m_CountX = 0;
+}
+
+void corr::resetY()
+{
+    zeroY();
+    m_CountY = 0;
+}
+
+void corr::zeroX()
+{
+    assert((m_fX != nullptr) || (m_cX != nullptr));
+
+    if (m_Type == buffer_type_real)
+        std::memset(m_fX, 0, m_Size * sizeof(float));
+    else
+    {
+        for (size_t i=0;i < m_Size;i++)
+        {
+            m_cX[i].real(0.0f);
+            m_cX[i].imag(0.0f);
+        }
+    }
+}
+
+void corr::zeroY()
+{
+    assert((m_fY != nullptr) || (m_cY != nullptr));
+
+    if (m_Type == buffer_type_real)
+        std::memset(m_fY, 0, m_Size * sizeof(float));
+    else
+    {
+        for (size_t i=0;i < m_Size;i++)
+        {
+            m_cY[i].real(0.0f);
+            m_cY[i].imag(0.0f);
+        }
+    }
+}
