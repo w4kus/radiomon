@@ -1,3 +1,7 @@
+// Copyright (c) 2025 John Mark White -- US Amateur Radio License: W4KUS
+//
+// Licensed under the MIT License - see LICENSE file for details.
+
 #include <stdio.h>
 #include "moving-avg.h"
 
