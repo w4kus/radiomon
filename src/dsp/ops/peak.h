@@ -1,19 +1,32 @@
 #pragma once
 
 #include <cmath>
-#include <type_traits>
 
 namespace util {
+
+/*! \brief Find peaks in a sample stream.
+ *
+ * Given three samples, this will determine if the middle sample is a peak or not.
+ * This is designed to handle streams of samples so to find the peaks, send each
+ * sample into the *get* function and check the boolean return code to see if
+ * a peak was found.
+ *
+ * \note Since this requires three samples, a peak is reported on the sample *following*
+ * the actual sample that is the peak.
+ *
+ */
 
 template<typename T>
 class peak
 {
-    static_assert(std::is_signed<T>::value == true);
-
 public:
     peak() : m_Cnt(0), 
              m_Syms{ {0, 0}, {0, 0}, {0, 0} } {}
 
+    //! Send a sample in and check if a peak was detected.
+    //! @param [in]  sym    The sample to consider with the previous two samples.
+    //! @param [out] pk     The sample that is the peak, if one was detected.
+    //! @return If a peak was detected or not.
     bool get(const T sym, T &pk)
     {
         bool ret = false;

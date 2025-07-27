@@ -24,6 +24,8 @@ public:
     fconv(const fconv &) = delete;
     fconv& operator=(const fconv&) = delete;
 
+    ~fconv();
+
     //! Create an instance with real (*float*) taps.
     //! @param [in] h Real taps.
     //! @param [in] n The number of taps.
@@ -36,19 +38,17 @@ public:
     //! @param [in] m The number of samples per call for this instance.
     fconv(const std::complex<float> *h, size_t n, const size_t m);
 
-    virtual ~fconv();
-
-    //! @param [in] b The samples to convolve with the taps of this instance.
-    //! @param [in] stripEdges If true, strip the zero padded edges, otherwise return
+    //! @param [in] b           The samples to convolve with the taps of this instance.
+    //! @param [in] stripEdges  If true, strip the zero padded edges, otherwise return
     //!             the full convolution.
-    //! @return If **stripEdges** is true, returns the m - n + 1 results in a vector of
+    //! @return     If **stripEdges** is true, returns the m - n + 1 results in a vector of
     //!             type *float*. Otherwise, returns m + n - 1 results.
     std::vector<float> convolve(const float *b, bool stripEdges = true);
 
-    //! @param [in] b The samples to convolve with the taps of this instance.
-    //! @param [in] stripEdges If true, strip the zero padded edges, otherwise return
+    //! @param [in] b           The samples to convolve with the taps of this instance.
+    //! @param [in] stripEdges  If true, strip the zero padded edges, otherwise return
     //!             the full convolution.
-    //! @return If **stripEdges** is true, returns the m - n + 1 results in a vector of
+    //! @return     If **stripEdges** is true, returns the m - n + 1 results in a vector of
     //!             type *float*. Otherwise, returns m + n - 1 results.
     std::vector<std::complex<float>> convolve(const std::complex<float> *b, bool stripEdges = true);
 

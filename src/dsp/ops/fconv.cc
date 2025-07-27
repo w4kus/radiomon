@@ -2,6 +2,8 @@
 // 
 // Licensed under the MIT License - see LICENSE file for details.
 
+//! \file fconv.cc
+
 #include <cstring>
 #include <fconv.h>
 
