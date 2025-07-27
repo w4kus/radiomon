@@ -10,9 +10,9 @@ namespace dsp {
 
 /*! \brief Template for time domain convolution.
  *
- * This calculates the convolution of two sequences.  Unlike the conv_full implementation
+ * This calculates the convolution of two signals.  Unlike the \ref dsp::conv_full implementation
  * template, this skips the zero padded edges.  Therefore, given
- * two sequences **b**, of size **m**, and **h**, of size **n**, this
+ * two signals **b**, of size **m**, and **h**, of size **n**, this
  * produces an output of size m - n + 1.  This implies that **m** must be greater
  * than or equal to **n**.  This is what the *Octave/Matlab* function *conv*
  * returns when given the 'valid' option.

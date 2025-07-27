@@ -10,8 +10,8 @@ namespace dsp {
 
 /*! \brief Template for time domain convolution.
  *
- * This calculates the standard convolution of two sequences.  Given
- * two sequences **b**, of size **m**, and **h**, of size **n**, this
+ * This calculates the standard convolution of two signals.  Given
+ * two signals **b**, of size **m**, and **h**, of size **n**, this
  * produces an output of size m + n - 1.
  *
  * The output is of type *std::vector<T>*.  It is expected that **T**
