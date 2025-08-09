@@ -24,9 +24,9 @@ function save_vector(fname, vname, v, type, cols)
     endif
 
     if is_complex == 0
-      fprintf(f, '%.4f', v(i))
+      fprintf(f, '%.6f', v(i))
     else
-      fprintf(f, '{%.4f, 0}', v(i))
+      fprintf(f, '{%.6f, 0}', v(i))
     endif
 
     ++count
