@@ -88,8 +88,8 @@ std::vector<float> fconv::convolve(const float *b, bool stripEdges)
 
     execute();
 
-    size_t start = (stripEdges) ? m_N + 1 : 0;
-    size_t end = (stripEdges) ? m_DftSize - m_N + 2: m_DftSize - 1;
+    size_t start = (stripEdges) ? m_N : 0;
+    size_t end = (stripEdges) ? m_DftSize - m_N + 1: m_DftSize - 1;
 
     for (size_t i=start;i <= end;i++)
     {
@@ -114,8 +114,8 @@ std::vector<std::complex<float>> fconv::convolve(const std::complex<float> *b, b
 
     execute();
     
-    size_t start = (stripEdges) ? m_N + 1 : 0;
-    size_t end = (stripEdges) ? m_DftSize - m_N + 2: m_DftSize - 1;
+    size_t start = (stripEdges) ? m_N : 0;
+    size_t end = (stripEdges) ? m_DftSize - m_N + 1: m_DftSize - 1;
 
     for (size_t i=start;i <= end;i++)
     {

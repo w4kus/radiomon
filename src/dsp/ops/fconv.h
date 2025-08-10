@@ -13,7 +13,6 @@ namespace dsp {
 /*! \brief Frequency domain convolution.
  *
  * Implements convolution in the frequency domain using the [FFTW library](https://www.fftw.org).
- * This can be more efficient for long sequences.
  *
 */
 
@@ -39,18 +38,18 @@ public:
     fconv(const std::complex<float> *h, size_t n, const size_t m);
 
     //! @param [in] b           The samples to convolve with the taps of this instance.
-    //! @param [in] stripEdges  If true, strip the zero padded edges, otherwise return
+    //! @param [in] stripEdges  If true, strip the overlapping edges, otherwise return
     //!             the full convolution.
     //! @return     If **stripEdges** is true, returns the m - n + 1 results in a vector of
     //!             type *float*. Otherwise, returns m + n - 1 results.
-    std::vector<float> convolve(const float *b, bool stripEdges = true);
+    std::vector<float> convolve(const float *b, bool stripEdges = false);
 
     //! @param [in] b           The samples to convolve with the taps of this instance.
-    //! @param [in] stripEdges  If true, strip the zero padded edges, otherwise return
+    //! @param [in] stripEdges  If true, strip the overlapping edges, otherwise return
     //!             the full convolution.
     //! @return     If **stripEdges** is true, returns the m - n + 1 results in a vector of
-    //!             type *float*. Otherwise, returns m + n - 1 results.
-    std::vector<std::complex<float>> convolve(const std::complex<float> *b, bool stripEdges = true);
+    //!             type *complex*. Otherwise, returns m + n - 1 results.
+    std::vector<std::complex<float>> convolve(const std::complex<float> *b, bool stripEdges = false);
 
 private:
     fftwf_plan m_FwdPlan;
