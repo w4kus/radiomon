@@ -106,7 +106,7 @@ int main(int argc, char **argvp)
 {
     FILE *fcorr = fopen("corr-float.txt", "w");
     auto corr = std::make_unique<dsp::corr>(TEST_CORR_SEQ_SIZE, dsp::corr::buffer_type_real);
-    auto peak = util::peak<float>();
+    auto peak = util::peak<float>{ };
 
     // set buffer X to the sequence with which we want to correlate 
     corr->setX(test_corr_seq_f);
