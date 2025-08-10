@@ -4,7 +4,8 @@ sources = ['main.cc',
                     meson.project_source_root() + '/src/dsp/ops/corr.cc',
                     meson.project_source_root() + '/src/dmr/sync.cc',
                     meson.project_source_root() + '/src/dsp/ops/fconv.cc',
-                    meson.project_source_root() + '/src/dsp/ops/corr.cc' ]
+                    meson.project_source_root() + '/src/dsp/ops/corr.cc',
+                    meson.project_source_root() + '/src/dsp/ops/firfilt.cc' ]
 
 
 executable('dmr-mon', sources,
