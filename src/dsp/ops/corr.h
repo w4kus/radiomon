@@ -4,9 +4,7 @@
 
 #pragma once
 
-#include <vector>
 #include <complex>
-#include <exception>
 
 namespace dsp {
 

@@ -9,6 +9,9 @@
 #include <corr.h>
 #include <cassert>
 
+#include "cmove.h"
+#include "cmemset.h"
+
 using namespace dsp;
 
 corr::corr(const size_t n, const buffer_t type) :
@@ -77,12 +80,7 @@ void corr::setY(const std::complex<float> *y)
 {
     assert(m_cY != nullptr);
 
-    for (size_t i=0;i < m_Size;i++)
-    {
-        m_cY[i].real(y[i].real());
-        m_cY[i].imag(y[i].imag());
-    }
-
+    util::cmove<float>(m_cY, y, m_Size);
     m_CountY = 0;
 }
 
@@ -143,11 +141,7 @@ std::complex<float> corr::add(const std::complex<float> val, size_t &cnt, std::c
 
     if (cnt == m_Size)
     {
-        for (size_t i=0;i < (m_Size - 2);i++)
-        {
-            buff[i].real(buff[i+1].real());
-            buff[i].imag(buff[i+1].imag());
-        }
+        util::cmove(buff, &buff[1], m_Size - 1);
 
         buff[m_Size - 1].real(val.real());
         buff[m_Size - 1].imag(val.imag());
@@ -182,13 +176,7 @@ void corr::zeroX()
     if (m_Type == buffer_type_real)
         std::memset(m_fX, 0, m_Size * sizeof(float));
     else
-    {
-        for (size_t i=0;i < m_Size;i++)
-        {
-            m_cX[i].real(0.0f);
-            m_cX[i].imag(0.0f);
-        }
-    }
+        util::cmemset(m_cX, std::complex<float>{0, 0}, m_Size);
 }
 
 void corr::zeroY()
@@ -198,11 +186,5 @@ void corr::zeroY()
     if (m_Type == buffer_type_real)
         std::memset(m_fY, 0, m_Size * sizeof(float));
     else
-    {
-        for (size_t i=0;i < m_Size;i++)
-        {
-            m_cY[i].real(0.0f);
-            m_cY[i].imag(0.0f);
-        }
-    }
+        util::cmemset<float>(m_cY, std::complex<float>{0, 0}, m_Size);
 }
