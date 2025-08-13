@@ -1,11 +1,12 @@
 sources = ['main.cc',
                     'log.cc',
                     meson.project_source_root() + '/src/utils/cmdline.cc',
-                    meson.project_source_root() + '/src/dsp/ops/corr.cc',
+                    meson.project_source_root() + '/src/blocks/corr.cc',
                     meson.project_source_root() + '/src/dmr/sync.cc',
-                    meson.project_source_root() + '/src/dsp/ops/fconv.cc',
-                    meson.project_source_root() + '/src/dsp/ops/corr.cc',
-                    meson.project_source_root() + '/src/dsp/ops/firfilt.cc' ]
+                    meson.project_source_root() + '/src/blocks/fconv.cc',
+                    meson.project_source_root() + '/src/blocks/corr.cc',
+                    meson.project_source_root() + '/src/blocks/firfilt.cc',
+                    meson.project_source_root() + '/src/blocks/firinterp.cc' ]
 
 
 executable('dmr-mon', sources,
