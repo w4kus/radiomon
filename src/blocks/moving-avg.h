@@ -35,7 +35,6 @@ public:
     {
         m_Data = std::make_unique<T[]>(numElements);
         m_h = 1.0 / numElements;
-        std::memset(m_Data.get(), 0, numElements * sizeof(T));
     }
 
     //! Insert a new sample into the moving average filter.
