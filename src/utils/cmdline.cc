@@ -21,13 +21,13 @@ bool util::cmdOptionExists(char** begin, char** end, const std::string& option)
 void util::printReal(FILE *f, std::vector<float>  &vals)
 {
     for (std::vector<float>::iterator it = vals.begin(); it != vals.end(); ++it)
-        fprintf(f, "%0.4f ", *it);
+        fprintf(f, "%0.6f ", *it);
 }
 
 void util::printReal(FILE *f, size_t num, const float *vals)
 {
     for (size_t i=0;i < num;i++)
-        fprintf(f, "%0.04f ", vals[i]);
+        fprintf(f, "%0.06f ", vals[i]);
 }
 
 void util::printComplex(FILE *f, std::vector<std::complex<float>> &vals)
@@ -38,12 +38,12 @@ void util::printComplex(FILE *f, std::vector<std::complex<float>> &vals)
 
     for (std::vector<std::complex<float>>::iterator it = vals.begin(); it != vals.end(); ++it)
     {
-        fprintf(f, "%f", it->real());
+        fprintf(f, "%0.6f", it->real());
 
         if (it->imag() >= 0)
             fprintf(f, "+");
 
-        fprintf(f, "%0.4fj ", it->imag());
+        fprintf(f, "%0.6fj ", it->imag());
     }
 }
 
@@ -55,11 +55,11 @@ void util::printComplex(FILE *f, size_t num, const std::complex<float> *vals)
 
     for (size_t i=0;i < num;i++)
     {
-        fprintf(f, "%f", vals[i].real());
+        fprintf(f, "%0.6f", vals[i].real());
 
         if (vals[i].imag() >= 0)
             fprintf(f, "+");
 
-        fprintf(f, "%0.4fj ", vals[i].imag());
+        fprintf(f, "%0.6fj ", vals[i].imag());
     }
 }
