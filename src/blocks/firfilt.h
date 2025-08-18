@@ -45,13 +45,13 @@ public:
     //! Filter a segment of a real (float) signal.
     //! @param [in]  blkSize     The size of the segment or block.
     //! @param [in]  inBlock     The data to be filtered.
-    //! @param [out] outblock    The filtered data.
+    //! @param [out] outBlock    The filtered data.
     void filter(const size_t blkSize, const float *inBlock, const float *outBlock);
 
     //! Filter a segment of a complex signal.
     //! @param [in]  blkSize     The size of the segment or block.
     //! @param [in]  inBlock     The data to be filtered.
-    //! @param [out] outblock    The filtered data.
+    //! @param [out] outBlock    The filtered data.
     void filter(const size_t blkSize, const std::complex<float> *inBlock, const std::complex<float> *outBlock);
 
 private:
