@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "block.h"
+
 namespace dsp
 {
 
@@ -14,7 +16,7 @@ namespace dsp
 */
 
 template<typename T>
-class delay
+class delay : dsp::block
 {
 public:
 

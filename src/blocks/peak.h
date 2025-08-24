@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "block.h"
 
 namespace util {
 
@@ -17,7 +18,7 @@ namespace util {
  */
 
 template<typename T>
-class peak
+class peak : public dsp::block
 {
 public:
     peak() : m_Cnt(0), 

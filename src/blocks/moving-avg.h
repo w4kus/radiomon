@@ -8,6 +8,8 @@
 #include <type_traits>
 #include <memory>
 
+#include "block.h"
+
 namespace dsp {
 
 /*! \brief Moving average filter.
@@ -17,14 +19,11 @@ namespace dsp {
  */
 
 template<typename T>
-class average
+class average : public dsp::block
 {
     static_assert(std::is_floating_point<T>::value == true);
 
 public:
-    average() = delete;
-    average(const average &) = delete;
-    average& operator= (const average&) = delete;
 
     //! Create an instance with the number of elements of the filter.
     //! @param [in] numElements The maximum number of values to average.
