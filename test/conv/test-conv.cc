@@ -78,12 +78,12 @@ int main(int argc, char **argvp)
 static void testDirectReal(void)
 {
     auto f = fopen("dsp_conv.txt", "w");
-    auto conv = dsp::convolve<float>(rsig.data(), rsig.size(), lp_test_6k_48k, TEST_COEFF_SIZE);
+    auto conv = util::convolve<float>(rsig.data(), rsig.size(), lp_test_6k_48k, TEST_COEFF_SIZE);
     util::printReal(f, conv);
     fclose(f);
 
     f = fopen("dsp_conv_full.txt", "w");
-    conv = dsp::fullconvolve<float>(rsig.data(), rsig.size(), lp_test_6k_48k, TEST_COEFF_SIZE);
+    conv = util::fullconvolve<float>(rsig.data(), rsig.size(), lp_test_6k_48k, TEST_COEFF_SIZE);
     util::printReal(f, conv);
     fclose(f);
 }
@@ -91,12 +91,12 @@ static void testDirectReal(void)
 static void testDirectComplex(void)
 {
     auto f = fopen("dsp_conv_c.txt", "w");
-    auto conv = dsp::convolve<std::complex<float>>(csig.data(), csig.size(), lp_test_6k_48k_c, TEST_COEFF_SIZE);
+    auto conv = util::convolve<std::complex<float>>(csig.data(), csig.size(), lp_test_6k_48k_c, TEST_COEFF_SIZE);
     util::printComplex(f, conv);
     fclose(f);
 
     f = fopen("dsp_conv_full_c.txt", "w");
-    conv = dsp::convolve<std::complex<float>>(csig.data(), csig.size(), lp_test_6k_48k_c, TEST_COEFF_SIZE);
+    conv = util::convolve<std::complex<float>>(csig.data(), csig.size(), lp_test_6k_48k_c, TEST_COEFF_SIZE);
     util::printComplex(f, conv);
     fclose(f);
 }
@@ -104,7 +104,7 @@ static void testDirectComplex(void)
 static void testDftReal(void)
 {
     FILE *f = fopen("dsp_fconv.txt", "w");
-    auto dftconv = dsp::fconv{ lp_test_6k_48k, TEST_COEFF_SIZE, TEST_SIG_SIZE };
+    auto dftconv = util::fconv{ lp_test_6k_48k, TEST_COEFF_SIZE, TEST_SIG_SIZE };
     auto conv = dftconv.convolve(rsig.data());
     util::printReal(f, conv);
     fclose(f);
@@ -113,7 +113,7 @@ static void testDftReal(void)
 static void testDftComplex(void)
 {
     FILE *f = fopen("dsp_fconv_c.txt", "w");
-    auto dftconv = dsp::fconv{ lp_test_6k_48k_c, TEST_COEFF_SIZE, TEST_SIG_SIZE };
+    auto dftconv = util::fconv{ lp_test_6k_48k_c, TEST_COEFF_SIZE, TEST_SIG_SIZE };
     auto conv = dftconv.convolve(csig.data());
     util::printComplex(f, conv);
     fclose(f);

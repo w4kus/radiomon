@@ -7,7 +7,7 @@
 #include <cstring>
 #include <fconv.h>
 
-using namespace dsp;
+using namespace util;
 
 fconv::fconv(const float *h, const size_t n, const size_t m) :
     m_FwdPlan(nullptr),

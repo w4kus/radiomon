@@ -6,7 +6,7 @@
 
 #include <vector>
 
-namespace dsp {
+namespace util {
 
 /*! \brief Template for time domain convolution.
  *

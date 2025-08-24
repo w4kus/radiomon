@@ -8,7 +8,7 @@
 #include <complex>
 #include <fftw3.h>
 
-namespace dsp {
+namespace util {
 
 /*! \brief Frequency domain convolution.
  *
