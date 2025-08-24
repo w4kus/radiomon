@@ -31,10 +31,12 @@ function save_vector(fname, vname, v, type, cols)
 
     ++count
     if i < length(v)
-      fprintf(f, ', ')
+      fprintf(f, ',')
       if count == cols
         fprintf(f, '\n')
         count = 0
+      else
+        fprintf(f, ' ')
       endif
     endif
   endfor
