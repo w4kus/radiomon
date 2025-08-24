@@ -7,6 +7,7 @@
 #include <memory>
 #include <complex>
 
+#include "aligned_ptr.h"
 #include "firfilt.h"
 
 namespace dsp {
@@ -19,30 +20,25 @@ namespace dsp {
  * Only real taps are supported.
  */
 
-class firinterp
+class firinterp : public block
 {
 public:
-    firinterp() = delete;
-    firinterp(const firinterp &) = delete;
-    firinterp& operator=(const firinterp &) = delete;
 
     //! Create an instance with a rational interpolation factor and FIR filter.
-    //! @param [in] L       The rational interpolation facto
-    //! @param [in] tapNum  The number of taps.
+    //! @param [in] L       The rational interpolation factor
     //! @param [in] taps    The filter coefficients.
-    firinterp(const uint32_t L, const size_t tapNum, const float *taps);
+    //! @param [in] adjustGain  Adjust the coeffcients by *L*. Defaults to *true*.
+    firinterp(const uint32_t L, const util::aligned_ptr<float> &taps, const bool adjustGain = true);
 
     //! Interpolate a block of a real signal.
-    //! @param [in]     blkSize     The size of the block, e.g, the amount of floats.
     //! @param [in]     inBlock     A pointer to the block buffer.
     //! @param [out]    outBlock    A pointer to an output buffer of size **blkSize \* L**
-    void filter(const size_t blkSize, const float *inBlock, const float *outBlock);
+    void filter(const util::aligned_ptr<float> &inBlock, const util::aligned_ptr<float> &outBlock);
 
     //! Interpolate a block of a complex signal.
-    //! @param [in]     blkSize     The size of the block, e.g., the amount of complex numbers.
     //! @param [in]     inBlock     A pointer to the block buffer.
     //! @param [out]    outBlock    A pointer to an output buffer of size **blkSize \* L**
-    void filter(const size_t blkSize, const std::complex<float> *inBlock, const std::complex<float> *outBlock);
+    void filter(const util::aligned_ptr<std::complex<float>> &inBlock, const util::aligned_ptr<std::complex<float>> &outBlock);
 
 private:
 

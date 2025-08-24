@@ -3,52 +3,62 @@
 // Licensed under the MIT License - see LICENSE file for details.
 
 #include <cassert>
+#include <cstring>
 
 #include "firinterp.h"
 
 using namespace dsp;
 
-firinterp::firinterp(const uint32_t L, const size_t tapNum, const float *taps) :
+firinterp::firinterp(const uint32_t L, const util::aligned_ptr<float> &taps, const bool adjustGain) :
     m_L(L)
 {
     assert(L > 0);
 
-    m_LpFilter = std::make_unique<firfilter>(tapNum, taps);
+    if (adjustGain)
+    {
+        float *p = (float *)taps.get();
+        for (size_t i=0;i < taps.size();i++)
+            p[i] *= (float)L;
+    }
+
+    m_LpFilter = std::make_unique<firfilter>(taps);
 }
 
-void firinterp::filter(const size_t blkSize, const float *inBlock, const float *outBlock)
+void firinterp::filter(const util::aligned_ptr<float> &inBlock, const util::aligned_ptr<float> &outBlock)
 {
-    const size_t outBlockSize = blkSize * m_L;
-    auto filterBlock = std::make_unique<float[]>(outBlockSize);
+    const size_t outBlockSize = inBlock.size() * m_L;
+    auto filterBlock = util::make_aligned_ptr<float>(outBlockSize);
+    auto *p = (float *)filterBlock.get();
 
-    for (size_t i=0,j=0;i < blkSize;i++)
+    for (size_t i=0,j=0;i < inBlock.size();i++)
     {
-        filterBlock[j++] = inBlock[i];
+        p[j++] = inBlock[i];
 
         uint32_t cnt = m_L - 1;
         while(cnt--)
-            filterBlock[j++] = 0.0f;
+            p[j++] = 0.0f;
     }
 
-    m_LpFilter->filter(outBlockSize, filterBlock.get(), outBlock);
+    m_LpFilter->filter(filterBlock, outBlock);
 }
 
-void firinterp::filter(const size_t blkSize, const std::complex<float> *inBlock, const std::complex<float> *outBlock)
+void firinterp::filter(const util::aligned_ptr<std::complex<float>> &inBlock, const util::aligned_ptr<std::complex<float>> &outBlock)
 {
-    const size_t outBlockSize = blkSize * m_L;
+    const size_t outBlockSize = inBlock.size() * m_L;
+    auto filterBlock = util::make_aligned_ptr<std::complex<float>>(outBlockSize);
+    auto *p = (std::complex<float> *)filterBlock.get();
 
-    auto filterBlock = std::make_unique<std::complex<float>[]>(outBlockSize);
-    for (size_t i=0,j=0;i < blkSize;i++)
+    for (size_t i=0,j=0;i < inBlock.size();i++)
     {
-        filterBlock[j++] = inBlock[i];
+        p[j++] = inBlock[i];
 
         uint32_t cnt = m_L - 1;
         while(cnt--)
         {
-            filterBlock[j].real(0.0f);
-            filterBlock[j++].imag(0.0f);
+            p[j].real(0.0f);
+            p[j++].imag(0.0f);
         }
     }
 
-    m_LpFilter->filter(outBlockSize, filterBlock.get(), outBlock);
+    m_LpFilter->filter(filterBlock, outBlock);
 }

@@ -6,9 +6,10 @@
 #include <complex>
 #include <vector>
 #include <memory>
-#
+
 #include "firinterp.h"
 #include "cmdline.h"
+#include "aligned_ptr.h"
 
 // 4K @ 48Ksps
 const float test_sig[256] =
@@ -69,38 +70,47 @@ constexpr size_t L = 3;
 int main(int argc, char **argvp)
 {
     FILE *f = fopen("firinterp-float.txt", "w");
-    dsp::firinterp interp { L, tapNum, lp_test_8p5K_48k };
+    dsp::firinterp interp { L, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
 
-    auto out = new float[chunkSize * L];
+	auto out = util::make_aligned_ptr<float>(chunkSize * L);
+	auto sig = util::make_aligned_ptr<float>(chunkSize, test_sig);
+	auto *p = (float *)sig.get();
 
-    for (size_t i=0;i < chunkNum;i++)
+    for (size_t i=1;i < chunkNum;i++)
     {
-        interp.filter(chunkSize, &test_sig[i * chunkSize], out);
-        util::printReal(f, chunkSize * L, out);
+		interp.filter(sig, out);
+		util::printReal(f, chunkSize * L, out.get());
+
+		if ((i + 1) < chunkNum)
+			memcpy(p, &test_sig[i * chunkSize], chunkSize * sizeof(float));
     }
 
-    delete []out;
     fclose(f);
 
 	f = fopen("firinterp-complex.txt", "w");
 
-	auto ctest_sig = new std::complex<float>[sigNum * (sizeof(std::complex<float>) / sizeof(float))];
-	auto *cplexout = new std::complex<float>[sigNum * (sizeof(std::complex<float>) / sizeof(float)) * L];
+	auto csig = util::make_aligned_ptr<std::complex<float>>(sigNum);
+	auto cout = util::make_aligned_ptr<std::complex<float>>(chunkSize * L);
+	auto *cp = (std::complex<float> *)csig.get();
 
 	for (size_t i=0;i < sigNum;i++)
 	{
-		ctest_sig[i].real(test_sig[i]);
-		ctest_sig[i].imag(0.0f);
+		cp[i].real(test_sig[i]);
+		cp[i].imag(0.0f);
 	}
 
-    for (size_t i=0;i < chunkNum;i++)
+	auto cin = util::make_aligned_ptr<std::complex<float>>(chunkSize, csig.get());
+	cp = (std::complex<float> *)cin.get();
+
+    for (size_t i=1;i < chunkNum;i++)
     {
-        interp.filter(chunkSize, &ctest_sig[i * chunkSize], cplexout);
-        util::printComplex(f, chunkSize * L, cplexout);
+        interp.filter(cin, cout);
+        util::printComplex(f, chunkSize * L, cout.get());
+
+		if ((i + 1) < chunkNum)
+			memcpy(cp, &csig.get()[i * chunkSize], chunkSize * sizeof(std::complex<float>));
     }
 
-	delete []ctest_sig;
-	delete []cplexout;
 	fclose(f);
 
     return 0;

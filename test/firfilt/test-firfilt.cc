@@ -6,7 +6,7 @@
 #include <complex>
 #include <vector>
 #include <memory>
-#
+
 #include "firfilt.h"
 #include "cmdline.h"
 
@@ -138,39 +138,36 @@ constexpr size_t sigNum = sizeof(test_sig) / sizeof(test_sig[0]);
 
 int main(int argc, char **argvp)
 {
-    float *out = nullptr;
-    std::complex<float> *outc = nullptr;
-    std::complex<float> *test_sigc = nullptr;
-
-    auto testFir = dsp::firfilter { tapNumLarge, lp_test_6k_48k_large };
+    auto testFir = dsp::firfilter { util::make_aligned_ptr(tapNumLarge, lp_test_6k_48k_large) };
 
     FILE *f = fopen("ffilt-float.txt", "w");
-    out = new float[321];
+
+    auto out = util::make_aligned_ptr<float>(64);
 
     for (size_t i=0;i < 8;i++)
     {
-        testFir.filter(64, &test_sig[i * 64], out);
-        util::printReal(f, 64, out);
+        auto seg = util::make_aligned_ptr<float>(64, &test_sig[i * 64]);
+        testFir.filter(seg, out);
+        util::printReal(f, 64, out.get());
     }
 
-    delete []out;
     fclose(f);
 
     f = fopen("ffilt-complex.txt", "w");
-    outc = new std::complex<float>[321];
-    test_sigc = new std::complex<float>[512];
+    auto outc = util::make_aligned_ptr<std::complex<float>>(64);
+    auto sigc = new std::complex<float>[sigNum];
 
-    for (size_t i=0;i < 512;i++)
-        test_sigc[i] = std::complex<float> { test_sig[i], 0.0f };
+    for (size_t i=0;i < sigNum;i++)
+        sigc[i] = std::complex<float> { test_sig[i], 0.0f };
 
     for (size_t i=0;i < 8;i++)
     {
-        testFir.filter(64, &test_sigc[i * 64], outc);
-        util::printComplex(f, 64, outc);
+        auto seg = util::make_aligned_ptr<std::complex<float>>(64, &sigc[i * 64]);
+        testFir.filter(seg, outc);
+        util::printComplex(f, 64, outc.get());
     }
 
-    delete []outc;
-    delete []test_sigc;
+    delete []sigc;
     fclose(f);
 
     return 0;

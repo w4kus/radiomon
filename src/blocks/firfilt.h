@@ -7,7 +7,8 @@
 #include <stdlib.h>
 #include <vector>
 #include <complex>
-#include <memory>
+
+#include "block.h"
 
 namespace dsp {
 
@@ -27,38 +28,33 @@ namespace dsp {
  *
 */
 
-class firfilter
+class firfilter : public block
 {
 public:
 
-    firfilter() = delete;
-    firfilter(const firfilter &) = delete;
-    firfilter& operator=(const firfilter &) = delete;
-
     //! Create an instance for filtering.
-    //! @param [in] tapNum  The number of filter coefficents for this instance.
     //! @param [in] taps    The array of coefficents.
-    firfilter(const size_t tapNum, const float *taps);
+    firfilter(const util::aligned_ptr<float> &taps);
 
-    ~firfilter();
+    ~firfilter() { }
 
     //! Filter a segment of a real (float) signal.
-    //! @param [in]  blkSize     The size of the segment or block.
     //! @param [in]  inBlock     The data to be filtered.
     //! @param [out] outBlock    The filtered data.
-    void filter(const size_t blkSize, const float *inBlock, const float *outBlock);
+    void filter(const util::aligned_ptr<float> &inBlock, const util::aligned_ptr<float> &outBlock);
 
     //! Filter a segment of a complex signal.
-    //! @param [in]  blkSize     The size of the segment or block.
     //! @param [in]  inBlock     The data to be filtered.
     //! @param [out] outBlock    The filtered data.
-    void filter(const size_t blkSize, const std::complex<float> *inBlock, const std::complex<float> *outBlock);
+    void filter(const util::aligned_ptr<std::complex<float>> &inBlock,
+                const util::aligned_ptr<std::complex<float>> &outBlock);
 
 private:
 
-    size_t m_TapNum;
-    float *m_Taps;
-    float *m_fState;
-    std::complex<float> *m_cState;
+    util::aligned_ptr<float> m_Taps;
+
+    util::aligned_ptr<float> m_fState;
+
+    util::aligned_ptr<std::complex<float>> m_cState;
 };
 }

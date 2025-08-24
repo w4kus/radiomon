@@ -4,6 +4,7 @@
 
 #include <volk/volk.h>
 #include <cstring>
+#include <stdio.h>
 
 #include "firfilt.h"
 #include "cmemset.h"
@@ -11,58 +12,50 @@
 
 using namespace dsp;
 
-firfilter::firfilter(const size_t tapNum, const float *taps) :
-                    m_TapNum(tapNum),
-                    m_Taps(nullptr),
-                    m_fState(nullptr),
-                    m_cState(nullptr)
+firfilter::firfilter(const util::aligned_ptr<float> &taps)
 {
-    m_Taps = (float *)volk_malloc(m_TapNum * sizeof(float), volk_get_alignment());
-    std::memcpy(m_Taps, taps, m_TapNum * sizeof(float));
+    m_Taps = taps;
 }
 
-firfilter::~firfilter()
+void firfilter::filter(const util::aligned_ptr<float> &inBlock, const util::aligned_ptr<float> &outBlock)
 {
-    volk_free(m_Taps);
+    auto *out = (float *)outBlock.get();
 
-    if (m_fState) volk_free(m_fState);
-    if (m_cState) volk_free(m_cState);
-}
-
-void firfilter::filter(const size_t blkSize, const float *inBlock, const float *outBlock)
-{
-    auto *out = (float *)outBlock;
-
-    if (!m_fState)
+    if (m_fState.invalid())
     {
-        m_fState = (float *)volk_malloc(m_TapNum * sizeof(float), volk_get_alignment());
-        std::memset(m_fState, 0, m_TapNum * sizeof(float));
+        m_fState = util::make_aligned_ptr<float>(m_Taps.size());
+        std::memset((float *)m_fState.get(), 0, m_Taps.size() * sizeof(float));
     }
 
-    for (size_t i=0;i < blkSize;i++)
+    auto *state = (float *)m_fState.get();
+
+    for (size_t i=0;i < inBlock.size();i++)
     {
-        std::memmove(&m_fState[1], m_fState, (m_TapNum - 1) * sizeof(float));
-        m_fState[0] = inBlock[i];
-        volk_32f_x2_dot_prod_32f(out, m_fState, m_Taps, m_TapNum);
+        std::memmove(&state[1], state, (m_fState.size() - 1) * sizeof(float));
+        state[0] = inBlock[i];
+        volk_32f_x2_dot_prod_32f(out, state, m_Taps.get(), m_Taps.size());
         ++out;
     }
 }
 
-void firfilter::filter(const size_t blkSize, const std::complex<float> *inBlock, const std::complex<float> *outBlock)
+void firfilter::filter(const util::aligned_ptr<std::complex<float>> &inBlock,
+                        const util::aligned_ptr<std::complex<float>> &outBlock)
 {
-    auto *out = (std::complex<float> *)outBlock;
+    auto *out = (std::complex<float> *)outBlock.get();
 
-    if (!m_cState)
+    if (m_cState.invalid())
     {
-        m_cState = (std::complex<float> *)volk_malloc(m_TapNum * sizeof(std::complex<float>), volk_get_alignment());
-        util::cmemset(m_cState, std::complex<float>{0, 0}, m_TapNum);
+        m_cState = util::make_aligned_ptr<std::complex<float>>(m_Taps.size());
+        util::cmemset<float>((std::complex<float> *)m_cState.get(), { 0.0f, 0.0f }, m_Taps.size());
     }
 
-    for (size_t i=0;i < blkSize;i++)
+    auto *state = (std::complex<float> *)m_cState.get();
+
+    for (size_t i=0;i < inBlock.size();i++)
     {
-        util::cmove(&m_cState[1], m_cState, m_TapNum);
-        m_cState[0] = inBlock[i];
-        volk_32fc_32f_dot_prod_32fc(out, m_cState, m_Taps, m_TapNum);
+        util::cmove(&state[1], state, m_Taps.size() - 1);
+        state[0] = inBlock[i];
+        volk_32fc_32f_dot_prod_32fc(out, state, m_Taps.get(), m_Taps.size());
         ++out;
     }
 }
