@@ -18,10 +18,10 @@ namespace util {
  */
 
 template<typename T>
-class peak : public dsp::block
+class peak
 {
 public:
-    peak() : m_Cnt(0), 
+    peak() : m_Cnt(0),
              m_Syms{ {0, 0}, {0, 0}, {0, 0} } {}
 
     //! Send a sample in and check if a peak was detected.
