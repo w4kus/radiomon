@@ -9,12 +9,14 @@
 namespace util {
 
 template<typename T>
-void cmemset(std::complex<T> *dst, const std::complex<T> val, const size_t n)
+void *cmemset(std::complex<T> *dst, const std::complex<T> val, const size_t n)
 {
     for (size_t i=0;i < n;i++)
     {
         dst[i].real(val.real());
         dst[i].imag(val.imag());
     }
+
+    return dst;
 }
 }
