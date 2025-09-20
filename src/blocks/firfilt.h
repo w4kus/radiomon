@@ -7,6 +7,10 @@
 #include <stdlib.h>
 #include <vector>
 #include <complex>
+#include <algorithm>
+#include <cassert>
+#include "cmemset.h"
+#include "wrap.h"
 
 #include "block.h"
 
@@ -16,45 +20,43 @@ namespace dsp {
  *
  * This provides support for filtering a signal through a finite impulse response
  * (FIR) filter. The signal can be real or complex but only real coefficients are supported.
- * The non-transposed direct form (I/II) is used and any block size is acceptable. The state
- * of the filter is preserved for the life of the object instance.
- *
- * You can use an instance to filter both real and complex samples. Two state arrays are maintained
- * to facilitate this. The state arrays are created on the first call to one of the \ref filter
- * methods, so if you only use real or complex and not both, only one state array will be created.
- *
- * \note Typically the coefficents, or *taps*, are time reversed or *flipped* when used for filtering.
- * This implementation does **not** time reverse the taps.
+ * The non-transposed direct form (I/II) is used.
  *
 */
 
-class firfilter : public block
+template<typename T, typename B>
+class firfilter : public block<B>
 {
-public:
+    static_assert(std::is_floating_point_v<T> || util::is_std_complex_v<T>);
+    static_assert(is_block_func_v<B>);
 
+public:
     //! Create an instance for filtering.
     //! @param [in] taps    The array of coefficents.
-    firfilter(const util::aligned_ptr<float> &taps);
+    firfilter(const util::aligned_ptr<float> &taps) : m_Taps { taps }
+    {
+        block<B>::process = std::bind(&firfilter::filter, this, std::placeholders::_1, std::placeholders::_2);
+        m_State = util::make_aligned_ptr<T>(m_Taps.size());
+    }
 
-    ~firfilter() { }
-
-    //! Filter a segment of a real (float) signal.
+    //! Filter a segment of a signal.
     //! @param [in]  inBlock     The data to be filtered.
     //! @param [out] outBlock    The filtered data.
-    void filter(const util::aligned_ptr<float> &inBlock, const util::aligned_ptr<float> &outBlock);
+    void filter(const util::aligned_ptr<T> &inBlock, util::aligned_ptr<T> &outBlock)
+    {
+        outBlock = util::make_aligned_ptr<T>(inBlock.size());
 
-    //! Filter a segment of a complex signal.
-    //! @param [in]  inBlock     The data to be filtered.
-    //! @param [out] outBlock    The filtered data.
-    void filter(const util::aligned_ptr<std::complex<float>> &inBlock,
-                const util::aligned_ptr<std::complex<float>> &outBlock);
+        for (size_t i=0;i < inBlock.size();i++)
+        {
+            std::move_backward(m_State.begin(), m_State.end() - 1, m_State.end());
+            m_State[0] = inBlock[i];
+            util::dot_prod(&outBlock[i], &m_State[0], m_Taps.get(), m_Taps.size());
+        }
+    }
 
 private:
 
     util::aligned_ptr<float> m_Taps;
-
-    util::aligned_ptr<float> m_fState;
-
-    util::aligned_ptr<std::complex<float>> m_cState;
+    util::aligned_ptr<T> m_State;
 };
 }
