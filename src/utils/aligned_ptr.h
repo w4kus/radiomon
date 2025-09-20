@@ -8,57 +8,54 @@
 #include <cassert>
 #include <volk/volk.h>
 #include <memory>
+#include <iterator>
+#include <cstddef>
 
 namespace util {
 
- template<typename T>
- struct is_std_complex : std::false_type { };
+template<typename T>
+struct is_std_complex : std::false_type { };
 
- template<typename T>
- struct is_std_complex<std::complex<T>> : std::true_type { };
+template<typename T>
+struct is_std_complex<std::complex<T>> : std::true_type { };
+
+template<typename T>
+constexpr bool is_std_complex_v = is_std_complex<std::complex<T>>::value;
 
 /*! \brief Container for an aligned buffer compatible with the
- * [Volk](https://www.libvolk.org/) Libray. It is both movable and copyable.
+ * [Volk](https://www.libvolk.org/) Libray. It is both movable and copyable
+ * and has random access iterator support.
  *
  * This is the main container used throughout *dmr-mon* to pass sample blocks
- * down the chain through dsp blocks. You must use this when sourcing or sinking samples.
+ * down the chains. You must use this when sourcing or sinking samples.
  * Using this frees the block implementations from having to ensure the buffers
  * it handles are properly aligned.
  *
- * You can also use it for any buffer requirements as it supports arithmetic and
- * complex types. This is a good idea since it means the buffer can be easily
- * inserted into a chain if needed. This has similiar form to *std::unique_ptr* and
- * *std::shared_ptr* containers. See examples throughout the source code, especially in
+ * You can also use it for any buffer requirements as long as it is for arithmetic and
+ * complex types. This has similiar form to C++ smart pointer
+ * containers. See examples throughout the source code, especially in
  * the *block* directory.
- *
- * \note Support for copying is included mainly for block constructors to have the
- * ability to easily copy data for such things as filter taps. This also means you
- * could develop a block which allows pass by value for sample handlers in a chain.
- * Please avoid this and **always** pass sample data by a **const** reference to
- * sample processing methods. In fact, all *all* parameters, including *aligned_ptr*
- * types should be of const.
  */
 
 template<typename T>
 class aligned_ptr
 {
-    static_assert((is_std_complex<T>::value == true) || (std::is_arithmetic<T>::value == true));
+    static_assert(is_std_complex_v<T> || std::is_arithmetic_v<T>);
 
 public:
 
     //! default contructor - creates an instance in the cleared state.
-    //! Use one of the *make_aligned_ptr()* helpers at the bottom
-    //! to set things up when ready.
+    //! Use one of the *make_aligned_ptr()* helpers to set things up when ready.
     aligned_ptr() : m_Ptr{nullptr}, m_Size{0} { }
 
     //! parametric constuctor #1
-    aligned_ptr(const size_t size) : m_Ptr{nullptr}, m_Size{size}
+    explicit aligned_ptr(const size_t size) : m_Ptr{nullptr}, m_Size{size}
     {
         create_ptr(size);
     }
 
     //! parametric constructor #2
-    aligned_ptr(const size_t size, const T *values) : m_Ptr{nullptr}, m_Size{size}
+    explicit aligned_ptr(const size_t size, const T *values) : m_Ptr{nullptr}, m_Size{size}
     {
         create_ptr(size);
         std::memcpy(m_Ptr, values, size * sizeof(T));
@@ -83,7 +80,6 @@ public:
 
         m_Size = other.m_Size;
 
-        del_ptr();
         create_ptr(m_Size);
         std::memcpy(m_Ptr, other.m_Ptr, m_Size * sizeof(T));
 
@@ -93,8 +89,8 @@ public:
     //! move constructor
     aligned_ptr(aligned_ptr &&other)
     {
-        std::swap(m_Ptr, other.m_Ptr);
-        std::swap(m_Size, other.m_Size);
+        m_Ptr = std::exchange(other.m_Ptr, nullptr);
+        m_Size = std::exchange(other.m_Size, 0);
     }
 
     //! move assignment constructor
@@ -110,26 +106,25 @@ public:
         return *this;
     }
 
-    //! op overload for array style index reading
+    //! op overload for array style index reading (rhs)
     const T& operator[](size_t i) const
     {
         if (i < m_Size)
             return m_Ptr[i];
 
         assert(1 && "aligned_buffer: index out of range");
-        return m_Ptr[m_Size - 1];
+        return m_Ptr[0];
     }
 
-    //! op overload for array style index writing
-    T operator [](size_t i)
+    //! op overload for array style index writing (lhs)
+    T& operator[](size_t i)
     {
         if (i < m_Size)
             return m_Ptr[i];
 
         assert(1 && "aligned_buffer: index out of range");
-        return -99;
+        return m_Ptr[0];
     }
-
 
     //! Get the pointer of the contained buffer.
     const T* get() const
@@ -137,7 +132,7 @@ public:
         return m_Ptr;
     }
 
-    //! Get the number of elements in the contained buffer.
+    //! Get the size of the contained buffer.
     const size_t size() const
     {
         return m_Size;
@@ -149,11 +144,127 @@ public:
         return (bool)!m_Ptr;
     }
 
+    //! Reset the instance to a default contructed state
+    void reset() const
+    {
+        del_ptr();
+    }
+
+    //! Iterator which *should* support algorithms requiring random access.
+    struct iterator
+    {
+        using iterator_category = std::random_access_iterator_tag;
+        using difference_type   = std::ptrdiff_t;
+        using value_type        = T;
+        using pointer           = T*;
+        using reference         = T&;
+
+        iterator() = delete;
+
+        // destructible requirement
+        ~iterator() = default;
+
+        iterator(T *ptr) : m_iPtr(ptr) { }
+
+        // copy contructible requirement
+        iterator(const iterator &other)
+        {
+            m_iPtr = other.m_iPtr;
+        }
+
+        // copy assignable requirement
+        iterator& operator=(const iterator &other) const
+        {
+            if (m_iPtr == other.m_iPtr)
+                return *this;
+
+            m_iPtr = other.m_iPtr;
+            return *this;
+        }
+
+        // swappable requirment
+        iterator(aligned_ptr &&other)
+        {
+            std::exchange(other.m_iPtr, nullptr);
+        }
+
+        // swappable requirment
+        iterator& operator=(iterator &&other)
+        {
+            if (m_iPtr == other.m_iPtr)
+                return *this;
+
+            m_iPtr = std::exchange(other.m_iPtr, nullptr);
+            return *this;
+        }
+
+        // LegacyInputIterator, LegacyOutputIterator, and random access expression requirements
+        T& operator*() const { return *m_iPtr; }
+        T* operator->() { return m_iPtr; }
+        T operator[](int i) const { return m_iPtr[i]; }
+        T operator*(T value) const { *m_iPtr = value; }
+        iterator operator++(int) { return iterator(m_iPtr++); }
+
+        iterator& operator--()
+        {
+            --m_iPtr;
+            return *this;
+        }
+
+        iterator operator--(int){ iterator(m_iPtr--); }
+
+        iterator& operator++()
+        {
+            ++m_iPtr;
+            return *this;
+        }
+
+        iterator& operator+=(const int n)
+        {
+            m_iPtr += n;
+            return *this;
+        }
+
+        iterator operator+(const int n) { return (m_iPtr + n); }
+        iterator& operator-=(const int n)
+        {
+            m_iPtr -= n;
+            return *this;
+        }
+
+        iterator operator-(const int n) const { return iterator(m_iPtr - n); }
+
+        // Not sure what category this falls into but it's needed for
+        // compatiblity with GNU STL at least (e.g., std::move() from algorithm)
+        int operator-(const iterator &other) const { return (m_iPtr - other.m_iPtr); }
+
+        // equality comparable requirment
+        friend bool operator==(const iterator &a, const iterator &b){ return a.m_iPtr == b.m_iPtr; }
+        friend bool operator!=(const iterator &a, const iterator &b){ return a.m_iPtr != b.m_iPtr; }
+
+    private:
+        T* m_iPtr;
+    };
+
+    iterator begin() const { return iterator(m_Ptr); }
+    iterator end() const{ return iterator(&m_Ptr[m_Size]); }
+
 private:
 
-    void del_ptr() { if (m_Ptr) volk_free(m_Ptr); }
+    void del_ptr()
+    {
+        if (m_Ptr)
+        {
+            volk_free(m_Ptr);
+            m_Ptr = nullptr;
+        }
+
+        m_Size = 0;
+    }
+
     void create_ptr(size_t size) { m_Ptr = (T *)volk_malloc(size * sizeof(T), volk_get_alignment()); }
 
+    // RAM usage
     T* m_Ptr;
     size_t m_Size;
 };
@@ -170,5 +281,4 @@ aligned_ptr<T> make_aligned_ptr(const size_t size, const T *values)
 {
     return std::move(*(new aligned_ptr<T>(size, values)));
 }
-
 }
