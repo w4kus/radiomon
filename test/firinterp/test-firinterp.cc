@@ -63,52 +63,46 @@ const float lp_test_8p5K_48k[65] =
 
 constexpr size_t sigNum = sizeof(test_sig) / sizeof(test_sig[0]);
 constexpr size_t tapNum = sizeof(lp_test_8p5K_48k) / sizeof(lp_test_8p5K_48k[0]);
-constexpr size_t chunkNum = sigNum / 64;
 constexpr size_t chunkSize = 64;
+constexpr size_t chunkNum = sigNum / chunkSize;
 constexpr size_t L = 3;
 
 int main(int argc, char **argvp)
 {
     FILE *f = fopen("firinterp-float.txt", "w");
-    dsp::firinterp interp { L, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
+    dsp::firinterp<float,dsp::func_ff> interp { L, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
 
-	auto out = util::make_aligned_ptr<float>(chunkSize * L);
-	auto sig = util::make_aligned_ptr<float>(chunkSize, test_sig);
-	auto *p = (float *)sig.get();
+	auto out = util::aligned_ptr<float>{ };
+	auto sig = util::make_aligned_ptr<float>(chunkSize);
 
-    for (size_t i=1;i < chunkNum;i++)
+	for (size_t i=0;i < chunkNum;i++)
     {
-		interp.filter(sig, out);
-		util::printReal(f, chunkSize * L, out.get());
-
-		if ((i + 1) < chunkNum)
-			memcpy(p, &test_sig[i * chunkSize], chunkSize * sizeof(float));
+		std::memcpy(&sig[0], &test_sig[i * chunkSize], chunkSize * sizeof(float));
+		interp.interp(sig, out);
+		util::printReal(f, out.size(), out.get());
     }
 
     fclose(f);
 
 	f = fopen("firinterp-complex.txt", "w");
 
+    dsp::firinterp<std::complex<float>,dsp::func_cc> interpc { L, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
+	auto cout = util::aligned_ptr<std::complex<float>>{ };
 	auto csig = util::make_aligned_ptr<std::complex<float>>(sigNum);
-	auto cout = util::make_aligned_ptr<std::complex<float>>(chunkSize * L);
-	auto *cp = (std::complex<float> *)csig.get();
 
 	for (size_t i=0;i < sigNum;i++)
 	{
-		cp[i].real(test_sig[i]);
-		cp[i].imag(0.0f);
+		csig[i].real(test_sig[i]);
+		csig[i].imag(0.0f);
 	}
 
-	auto cin = util::make_aligned_ptr<std::complex<float>>(chunkSize, csig.get());
-	cp = (std::complex<float> *)cin.get();
+	auto cin = util::make_aligned_ptr<std::complex<float>>(chunkSize);
 
-    for (size_t i=1;i < chunkNum;i++)
+    for (size_t i=0;i < chunkNum;i++)
     {
-        interp.filter(cin, cout);
-        util::printComplex(f, chunkSize * L, cout.get());
-
-		if ((i + 1) < chunkNum)
-			memcpy(cp, &csig.get()[i * chunkSize], chunkSize * sizeof(std::complex<float>));
+		std::memcpy(&cin[0], &csig[i * chunkSize], chunkSize * sizeof(std::complex<float>));
+		interpc.interp(cin, cout);
+        util::printComplex(f, cout.size(), cout.get());
     }
 
 	fclose(f);

@@ -6,6 +6,7 @@
 #include <complex>
 #include <vector>
 #include <memory>
+#include <algorithm>
 
 #include "firfilt.h"
 #include "cmdline.h"
@@ -138,24 +139,26 @@ constexpr size_t sigNum = sizeof(test_sig) / sizeof(test_sig[0]);
 
 int main(int argc, char **argvp)
 {
-    auto testFir = dsp::firfilter { util::make_aligned_ptr(tapNumLarge, lp_test_6k_48k_large) };
+    auto testFir = dsp::firfilter<float,dsp::func_ff> { util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large) };
 
     FILE *f = fopen("ffilt-float.txt", "w");
 
-    auto out = util::make_aligned_ptr<float>(64);
+    auto out = util::aligned_ptr<float>{ };
 
     for (size_t i=0;i < 8;i++)
     {
         auto seg = util::make_aligned_ptr<float>(64, &test_sig[i * 64]);
         testFir.filter(seg, out);
-        util::printReal(f, 64, out.get());
+        util::printReal(f, out.size(), out.get());
     }
 
     fclose(f);
 
     f = fopen("ffilt-complex.txt", "w");
-    auto outc = util::make_aligned_ptr<std::complex<float>>(64);
+    auto outc = util::aligned_ptr<std::complex<float>>{ };
     auto sigc = new std::complex<float>[sigNum];
+
+    auto testFirc = dsp::firfilter<std::complex<float>,dsp::func_cc> { util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large) };
 
     for (size_t i=0;i < sigNum;i++)
         sigc[i] = std::complex<float> { test_sig[i], 0.0f };
@@ -163,8 +166,8 @@ int main(int argc, char **argvp)
     for (size_t i=0;i < 8;i++)
     {
         auto seg = util::make_aligned_ptr<std::complex<float>>(64, &sigc[i * 64]);
-        testFir.filter(seg, outc);
-        util::printComplex(f, 64, outc.get());
+        testFirc.filter(seg, outc);
+        util::printComplex(f, out.size(), outc.get());
     }
 
     delete []sigc;
