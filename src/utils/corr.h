@@ -6,7 +6,7 @@
 
 #include <complex>
 
-namespace dsp {
+namespace util {
 
 /*! \brief Calculate correlation coefficents between two signals.
  *

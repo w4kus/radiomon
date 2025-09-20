@@ -105,7 +105,7 @@ constexpr size_t TEST_CORR_SEQ_SIZE = sizeof(test_corr_seq_f) / sizeof(test_corr
 int main(int argc, char **argvp)
 {
     FILE *fcorr = fopen("corr-float.txt", "w");
-    auto corr = std::make_unique<dsp::corr>(TEST_CORR_SEQ_SIZE, dsp::corr::buffer_type_real);
+    auto corr = std::make_unique<util::corr>(TEST_CORR_SEQ_SIZE, util::corr::buffer_type_real);
     auto peak = util::peak<float>{ };
 
     // set buffer X to the sequence with which we want to correlate 
@@ -124,7 +124,7 @@ int main(int argc, char **argvp)
 
     fclose(fcorr);
 
-    corr = std::make_unique<dsp::corr>(TEST_CORR_SEQ_SIZE, dsp::corr::buffer_type_complex);
+    corr = std::make_unique<util::corr>(TEST_CORR_SEQ_SIZE, util::corr::buffer_type_complex);
 
     fcorr = fopen("corr-complex.txt", "w");
 

@@ -12,7 +12,7 @@
 #include "cmove.h"
 #include "cmemset.h"
 
-using namespace dsp;
+using namespace util;
 
 corr::corr(const size_t n, const buffer_t type) :
     m_Type(type),
