@@ -1,6 +1,7 @@
 project('dmr-mon', 'cpp',
 	version : '0.0.1',
 	license : 'GPL3',
+	default_options: ['cpp_std=c++14'],
 	meson_version : '>= 0.60.0')
 
 zmq_deps = dependency('libzmq', version: '>= 4.3.0')
