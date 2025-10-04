@@ -26,7 +26,7 @@ public:
     sync(frame_t mode, bool test = false);
     sync(frame_t mode, corr_callback_t cb, bool test = false);
 
-    virtual ~sync();
+    ~sync();
 
     sync(const sync&) = delete;
     sync& operator=(const sync&) = delete;
@@ -101,7 +101,7 @@ protected:
         return (sum >= SYNC_MIN) && (sum <= SYNC_MAX);
     }
 
-    virtual void xcorr(symbol_t *buff, symbol_t &max, symbol_t &min);
+    void xcorr(symbol_t *buff, symbol_t &max, symbol_t &min);
 
 private:
 
