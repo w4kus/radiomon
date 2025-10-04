@@ -91,10 +91,7 @@ int main(int argc, char **argvp)
 	auto csig = util::make_aligned_ptr<std::complex<float>>(sigNum);
 
 	for (size_t i=0;i < sigNum;i++)
-	{
-		csig[i].real(test_sig[i]);
-		csig[i].imag(0.0f);
-	}
+		csig[i] = { test_sig[i], 0.0f };
 
 	auto cin = util::make_aligned_ptr<std::complex<float>>(chunkSize);
 
