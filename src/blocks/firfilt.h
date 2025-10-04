@@ -9,7 +9,6 @@
 #include <complex>
 #include <algorithm>
 #include <cassert>
-#include "cmemset.h"
 #include "wrap.h"
 
 #include "block.h"
