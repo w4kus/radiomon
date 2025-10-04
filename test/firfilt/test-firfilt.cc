@@ -156,7 +156,7 @@ int main(int argc, char **argvp)
 
     f = fopen("ffilt-complex.txt", "w");
     auto outc = util::aligned_ptr<std::complex<float>>{ };
-    auto sigc = new std::complex<float>[sigNum];
+    auto sigc = std::make_unique<std::complex<float>[]>(sigNum);
 
     auto testFirc = dsp::firfilter<std::complex<float>,dsp::func_cc> { util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large) };
 
@@ -170,7 +170,6 @@ int main(int argc, char **argvp)
         util::printComplex(f, out.size(), outc.get());
     }
 
-    delete []sigc;
     fclose(f);
 
     return 0;
