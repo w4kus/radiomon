@@ -40,7 +40,7 @@ constexpr bool is_std_complex_v = is_std_complex<std::complex<T>>::value;
 template<typename T>
 class aligned_ptr
 {
-    static_assert(is_std_complex_v<T> || std::is_arithmetic_v<T>);
+    static_assert(is_std_complex_v<T> || (std::is_arithmetic<T>::value == std::true_type()));
 
 public:
 
