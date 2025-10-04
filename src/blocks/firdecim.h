@@ -24,7 +24,7 @@ namespace dsp {
 template<typename T, typename B>
 class firdecim : public block<B>
 {
-    static_assert(std::is_floating_point_v<T> || util::is_std_complex_v<T>);
+    static_assert((std::is_floating_point<T>::value == std::true_type()) || util::is_std_complex_v<T>);
     static_assert(is_block_func_v<B>);
 
 public:
