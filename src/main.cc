@@ -6,6 +6,7 @@
 #include "log.h"
 #include "zmq_stream.h"
 
+#if 0
 #define MSEC(x) (x*1000)
 
 #define DEBUG(fmt,...) TRACE(dmr::log::MAIN, fmt, ##__VA_ARGS__)
@@ -110,3 +111,9 @@ static bool parseCmdLine(int argc, char **argv)
 
     return ret;
 }
+#else
+int main(int argc, char **args)
+{
+    return 0;
+}
+#endif
