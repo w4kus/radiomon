@@ -104,7 +104,7 @@ static void testDirectComplex(void)
 static void testDftReal(void)
 {
     FILE *f = fopen("dsp_fconv.txt", "w");
-    auto dftconv = util::fconv{ lp_test_6k_48k, TEST_COEFF_SIZE, TEST_SIG_SIZE };
+    util::fconv dftconv { lp_test_6k_48k, TEST_COEFF_SIZE, TEST_SIG_SIZE };
     auto conv = dftconv.convolve(rsig.data());
     util::printReal(f, conv);
     fclose(f);
@@ -113,7 +113,7 @@ static void testDftReal(void)
 static void testDftComplex(void)
 {
     FILE *f = fopen("dsp_fconv_c.txt", "w");
-    auto dftconv = util::fconv{ lp_test_6k_48k_c, TEST_COEFF_SIZE, TEST_SIG_SIZE };
+    util::fconv dftconv { lp_test_6k_48k_c, TEST_COEFF_SIZE, TEST_SIG_SIZE };
     auto conv = dftconv.convolve(csig.data());
     util::printComplex(f, conv);
     fclose(f);

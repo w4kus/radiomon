@@ -139,7 +139,7 @@ constexpr size_t sigNum = sizeof(test_sig) / sizeof(test_sig[0]);
 
 int main(int argc, char **argvp)
 {
-    auto testFir = dsp::firfilter<float,dsp::func_ff> { util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large) };
+    dsp::firfilter<float,dsp::func_ff>testFir { util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large) };
 
     FILE *f = fopen("ffilt-float.txt", "w");
 
@@ -158,7 +158,7 @@ int main(int argc, char **argvp)
     auto outc = util::aligned_ptr<std::complex<float>>{ };
     auto sigc = std::make_unique<std::complex<float>[]>(sigNum);
 
-    auto testFirc = dsp::firfilter<std::complex<float>,dsp::func_cc> { util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large) };
+    dsp::firfilter<std::complex<float>,dsp::func_cc>testFirc { util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large) };
 
     for (size_t i=0;i < sigNum;i++)
         sigc[i] = std::complex<float> { test_sig[i], 0.0f };
