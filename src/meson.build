@@ -2,7 +2,7 @@ sources = ['main.cc',
                     'log.cc',
                     meson.project_source_root() + '/src/utils/cmdline.cc',
                     meson.project_source_root() + '/src/utils/corr.cc',
-                    meson.project_source_root() + '/src/dmr/sync.cc',
+                    # meson.project_source_root() + '/src/dmr/sync.cc',
                     meson.project_source_root() + '/src/utils/fconv.cc',
                     meson.project_source_root() + '/src/utils/corr.cc' ]
 
