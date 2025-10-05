@@ -92,4 +92,8 @@ private:
     std::unique_ptr<firfilter<T, B>> m_LpFilter;
     util::aligned_ptr<T> m_SamplingBuffer;
 };
+
+typedef class firdecim<float,dsp::func_ff>                 firdecim_ff;
+typedef class firdecim<std::complex<float>,dsp::func_cc>   firdecim_cc;
+
 }

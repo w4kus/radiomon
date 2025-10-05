@@ -22,6 +22,8 @@ struct is_std_complex<std::complex<T>> : std::true_type { };
 template<typename T>
 constexpr bool is_std_complex_v = is_std_complex<std::complex<T>>::value;
 
+typedef class std::complex<float> complex_f;
+
 /*! \brief Container for an aligned buffer compatible with the
  * [Volk](https://www.libvolk.org/) Libray. It is both movable and copyable
  * and has random access iterator support.

@@ -70,9 +70,9 @@ constexpr size_t L = 3;
 int main(int argc, char **argvp)
 {
     FILE *f = fopen("firinterp-float.txt", "w");
-    dsp::firinterp<float,dsp::func_ff> interp { L, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
+    dsp::firinterp_ff interp { L, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
 
-	auto out = util::aligned_ptr<float>{ };
+	auto out = util::make_aligned_ptr<float>(chunkSize * L);
 	auto sig = util::make_aligned_ptr<float>(chunkSize);
 
 	for (size_t i=0;i < chunkNum;i++)
@@ -86,18 +86,18 @@ int main(int argc, char **argvp)
 
 	f = fopen("firinterp-complex.txt", "w");
 
-    dsp::firinterp<std::complex<float>,dsp::func_cc> interpc { L, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
-	auto cout = util::aligned_ptr<std::complex<float>>{ };
-	auto csig = util::make_aligned_ptr<std::complex<float>>(sigNum);
+    dsp::firinterp_cc interpc { L, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
+	auto cout = util::make_aligned_ptr<util::complex_f>(chunkSize * L);
+	auto csig = util::make_aligned_ptr<util::complex_f>(sigNum);
 
 	for (size_t i=0;i < sigNum;i++)
 		csig[i] = { test_sig[i], 0.0f };
 
-	auto cin = util::make_aligned_ptr<std::complex<float>>(chunkSize);
+	auto cin = util::make_aligned_ptr<util::complex_f>(chunkSize);
 
     for (size_t i=0;i < chunkNum;i++)
     {
-		std::memcpy(&cin[0], &csig[i * chunkSize], chunkSize * sizeof(std::complex<float>));
+		std::memcpy(&cin[0], &csig[i * chunkSize], chunkSize * sizeof(util::complex_f));
 		interpc.interp(cin, cout);
         util::printComplex(f, cout.size(), cout.get());
     }

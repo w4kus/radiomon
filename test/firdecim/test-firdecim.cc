@@ -73,9 +73,9 @@ int main(int argc, char **argvp)
     FILE *f = fopen("firdecim-float.txt", "w");
 
 #if 0
-	dsp::firdecim<float, dsp::func_ff> decim { M, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
-	auto out = util::aligned_ptr<float>{ };
+	dsp::firdecim_ff decim { M, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
 	auto sig = util::make_aligned_ptr<float>(chunkSize);
+	auto out = util::aligned_ptr<float>{ };
 
     for (size_t i=0;i < chunkNum;i++)
     {
@@ -84,7 +84,7 @@ int main(int argc, char **argvp)
 		util::printReal(f, out.size(), out.get());
     }
 #else
-	dsp::firdecim<float, dsp::func_ff> decim { M, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
+	dsp::firdecim_ff decim { M, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
 	size_t idx = 0;
 	auto sig = util::make_aligned_ptr<float>(chunkSize, test_sig);
 	auto out = util::aligned_ptr<float>{ };
@@ -111,18 +111,18 @@ int main(int argc, char **argvp)
 
     f = fopen("firdecim-complex.txt", "w");
 
-    dsp::firdecim<std::complex<float>,dsp::func_cc>decimc { M, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
-	auto cout = util::aligned_ptr<std::complex<float>>{ };
-	auto csig = util::make_aligned_ptr<std::complex<float>>(sigNum);
+    dsp::firdecim_cc decimc { M, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
+	auto cout = util::make_aligned_ptr<util::complex_f>(chunkSize / 2);
+	auto csig = util::make_aligned_ptr<util::complex_f>(sigNum);
 
 	for (size_t i=0;i < sigNum;i++)
 		csig[i] = { test_sig[i], 0.0f };
 
-	auto cin = util::make_aligned_ptr<std::complex<float>>(chunkSize);
+	auto cin = util::make_aligned_ptr<util::complex_f>(chunkSize);
 
     for (size_t i=0;i < chunkNum;i++)
     {
-		std::memcpy(&cin[0], &csig[i * chunkSize], chunkSize * sizeof(std::complex<float>));
+		std::memcpy(&cin[0], &csig[i * chunkSize], chunkSize * sizeof(util::complex_f));
 		decimc.decim(cin, cout);
         util::printComplex(f, cout.size(), cout.get());
     }

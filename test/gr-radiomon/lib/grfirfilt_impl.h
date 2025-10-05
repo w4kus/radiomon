@@ -24,8 +24,8 @@ private:
     // get it to work with pybind, we'll declare two versions of
     // dsp::firfilter, one float and one complex, and use template
     // specializations.
-    std::unique_ptr<dsp::firfilter<float, dsp::func_ff>> d_FilterF;
-    std::unique_ptr<dsp::firfilter<gr_complex, dsp::func_cc>> d_FilterC;
+    std::unique_ptr<dsp::firfilter_ff> d_FilterF;
+    std::unique_ptr<dsp::firfilter_cc> d_FilterC;
 
 public:
     grfirfilt_impl();

@@ -88,7 +88,7 @@ grfirfilt_impl<float>::grfirfilt_impl()
                      gr::io_signature::make(
                          1 /* min outputs */, 1 /*max outputs */, sizeof(float)))
 {
-    d_FilterF = std::make_unique<dsp::firfilter<float, dsp::func_ff>>(util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large));
+    d_FilterF = std::make_unique<dsp::firfilter_ff>(util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large));
 }
 
 template<>
@@ -99,7 +99,7 @@ grfirfilt_impl<gr_complex>::grfirfilt_impl()
                      gr::io_signature::make(
                          1 /* min outputs */, 1 /*max outputs */, sizeof(gr_complex)))
 {
-    d_FilterC = std::make_unique<dsp::firfilter<gr_complex, dsp::func_cc>>(util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large));
+    d_FilterC = std::make_unique<dsp::firfilter_cc>(util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large));
 }
 
 /*
@@ -125,7 +125,7 @@ int grfirfilt_impl<float>::work(int noutput_items,
     auto out = static_cast<float*>(output_items[0]);
 
     auto apIn = util::make_aligned_ptr<float>(noutput_items, in);
-    auto apOut = util::aligned_ptr<float> { };
+    auto apOut = util::aligned_ptr<float>(noutput_items);
 
     d_FilterF->filter(apIn, apOut);
 
@@ -145,7 +145,7 @@ int grfirfilt_impl<gr_complex>::work(int noutput_items,
     auto out = static_cast<gr_complex*>(output_items[0]);
 
     auto apIn = util::make_aligned_ptr<gr_complex>(noutput_items, in);
-    auto apOut = util::aligned_ptr<gr_complex> { };
+    auto apOut = util::make_aligned_ptr<gr_complex>(noutput_items);
 
     d_FilterC->filter(apIn, apOut);
 

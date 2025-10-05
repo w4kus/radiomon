@@ -58,4 +58,8 @@ private:
     util::aligned_ptr<float> m_Taps;
     util::aligned_ptr<T> m_State;
 };
+
+typedef class firfilter<float,dsp::func_ff>                 firfilter_ff;
+typedef class firfilter<std::complex<float>,dsp::func_cc>   firfilter_cc;
+
 }
