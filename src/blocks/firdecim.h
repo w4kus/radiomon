@@ -93,7 +93,7 @@ private:
     util::aligned_ptr<T> m_SamplingBuffer;
 };
 
-typedef class firdecim<float,dsp::func_ff>                 firdecim_ff;
-typedef class firdecim<std::complex<float>,dsp::func_cc>   firdecim_cc;
+using firdecim_ff = firdecim<float,dsp::func_ff>;
+using firdecim_cc = firdecim<std::complex<float>,dsp::func_cc>;
 
 }

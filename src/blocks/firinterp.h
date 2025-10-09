@@ -77,6 +77,7 @@ private:
     std::unique_ptr<firfilter<T, B>> m_LpFilter;
 };
 
-typedef class firinterp<float,dsp::func_ff>               firinterp_ff;
-typedef class firinterp<std::complex<float>,dsp::func_cc> firinterp_cc;
+using firinterp_ff = firinterp<float,dsp::func_ff>;
+using firinterp_cc = firinterp<std::complex<float>,dsp::func_cc>;
+
 }
