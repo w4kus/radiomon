@@ -112,7 +112,7 @@ int main(int argc, char **argvp)
     f = fopen("firdecim-complex.txt", "w");
 
     dsp::firdecim_cc decimc { M, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k) };
-	auto cout = util::make_aligned_ptr<util::complex_f>(chunkSize / 2);
+	util::aligned_ptr<util::complex_f> cout { };
 	auto csig = util::make_aligned_ptr<util::complex_f>(sigNum);
 
 	for (size_t i=0;i < sigNum;i++)
