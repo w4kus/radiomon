@@ -47,12 +47,3 @@ void bind_grfirfilt(py::module &m)
     bind_grfirfilt_template<float>(m, "grfirfilt_f");
     bind_grfirfilt_template<gr_complex>(m, "grfirfilt_c");
 }
-
-
-
-
-
-
-
-
-

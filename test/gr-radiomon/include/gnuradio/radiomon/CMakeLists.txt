@@ -11,5 +11,6 @@
 ########################################################################
 install(FILES
     api.h
-    grfirfilt.h DESTINATION include/gnuradio/radiomon
+    grfirfilt.h
+    grfirdecim.h DESTINATION include/gnuradio/radiomon
 )

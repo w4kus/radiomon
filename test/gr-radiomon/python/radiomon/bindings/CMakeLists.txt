@@ -29,7 +29,8 @@ include(GrPybind)
 ########################################################################
 
 list(APPEND radiomon_python_files
-    grfirfilt_python.cc python_bindings.cc)
+    grfirfilt_python.cc
+    grfirdecim_python.cc python_bindings.cc)
 
 GR_PYBIND_MAKE_OOT(radiomon
    ../../..

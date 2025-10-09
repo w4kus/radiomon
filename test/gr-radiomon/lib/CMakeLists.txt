@@ -13,6 +13,7 @@ include(GrPlatform) #define LIB_SUFFIX
 
 list(APPEND radiomon_sources
     grfirfilt_impl.cc
+    grfirdecim_impl.cc
 )
 
 set(radiomon_sources "${radiomon_sources}" PARENT_SCOPE)
