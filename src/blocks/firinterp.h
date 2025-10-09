@@ -35,7 +35,7 @@ public:
     firinterp(const uint16_t L, const util::aligned_ptr<float> &taps, const bool adjustGain = true) :
                 m_L { L }
     {
-        assert(L > 1);
+        assert(L > 0);
 
         block<B>::process = std::bind(&firinterp::interp, this, std::placeholders::_1, std::placeholders::_2);
 

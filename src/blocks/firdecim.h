@@ -35,7 +35,7 @@ public:
     firdecim(const uint16_t M, const util::aligned_ptr<float> taps) :
                 m_M { M }, m_SamplingCount { 0 }
     {
-        assert(M > 1);
+        assert(M > 0);
 
         block<B>::process = std::bind(&firdecim::decim, this, std::placeholders::_1, std::placeholders::_2);
         m_LpFilter = std::make_unique<firfilter<T, B>>(taps);
