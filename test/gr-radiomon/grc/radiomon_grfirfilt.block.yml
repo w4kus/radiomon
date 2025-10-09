@@ -16,7 +16,6 @@ parameters:
   options: [ float, complex ]
   option_attributes:
     fcn: [ f, c ]
-    offset_type: [ float, real ]
   hide: part
 
 #  Make one 'inputs' list entry per input and one 'outputs' list entry per output.
