@@ -125,14 +125,13 @@ int grfirfilt_impl<float>::work(int noutput_items,
     auto out = static_cast<float*>(output_items[0]);
 
     auto apIn = util::make_aligned_ptr<float>(noutput_items, in);
-    auto apOut = util::aligned_ptr<float>(noutput_items);
+    util::aligned_ptr<float> apOut { };
 
     d_FilterF->filter(apIn, apOut);
 
-    std::memcpy(out, &apOut[0], apOut.size() * sizeof(float));
+    std::memcpy(out, apOut.get(), apOut.size() * sizeof(float));
 
     // Tell runtime system how many output items we produced.
-    // By default it's 'noutput_items'
     return apOut.size();
 }
 
@@ -145,14 +144,13 @@ int grfirfilt_impl<gr_complex>::work(int noutput_items,
     auto out = static_cast<gr_complex*>(output_items[0]);
 
     auto apIn = util::make_aligned_ptr<gr_complex>(noutput_items, in);
-    auto apOut = util::make_aligned_ptr<gr_complex>(noutput_items);
+    util::aligned_ptr<gr_complex> apOut { };
 
     d_FilterC->filter(apIn, apOut);
 
-    std::memcpy(out, &apOut[0], apOut.size() * sizeof(gr_complex));
+    std::memcpy(out, apOut.get(), apOut.size() * sizeof(gr_complex));
 
     // Tell runtime system how many output items we produced.
-    // By default it's 'noutput_items'
     return apOut.size();
 }
 
