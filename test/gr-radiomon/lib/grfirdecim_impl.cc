@@ -12,7 +12,7 @@
 namespace gr {
 namespace radiomon {
 
-const float lp_test_8p5K_48k[65] =
+const float lp_hamming_8p5K[65] =
 {
 	-0.000645, 0.000135, 0.000898, 0.000754, -0.000445, -0.001570, -0.001046, 0.001195,
     0.002836, 0.001296, -0.002716, -0.004727, -0.001152, 0.005367, 0.007170, 0.000123,
@@ -25,7 +25,7 @@ const float lp_test_8p5K_48k[65] =
     -0.000645
 };
 
-constexpr size_t tapNum = sizeof(lp_test_8p5K_48k) / sizeof(lp_test_8p5K_48k[0]);
+constexpr size_t tapNum = sizeof(lp_hamming_8p5K) / sizeof(lp_hamming_8p5K[0]);
 
 template<typename T>
 typename grfirdecim<T>::sptr grfirdecim<T>::make(short decimate)
@@ -55,7 +55,7 @@ grfirdecim_impl<float>::grfirdecim_impl(const short decimate)
                          decimate /*<+decimation+>*/),
                          d_decimate { decimate }
 {
-    d_decimF = std::make_unique<dsp::firdecim_ff>(decimate, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k));
+    d_decimF = std::make_unique<dsp::firdecim_ff>(decimate, util::make_aligned_ptr<float>(tapNum, lp_hamming_8p5K));
 }
 
 template<>
@@ -66,7 +66,7 @@ grfirdecim_impl<gr_complex>::grfirdecim_impl(const short decimate)
                          decimate /*<+decimation+>*/),
                          d_decimate { decimate }
 {
-    d_decimC = std::make_unique<dsp::firdecim_cc>(decimate, util::make_aligned_ptr<float>(tapNum, lp_test_8p5K_48k));
+    d_decimC = std::make_unique<dsp::firdecim_cc>(decimate, util::make_aligned_ptr<float>(tapNum, lp_hamming_8p5K));
 }
 
 /*

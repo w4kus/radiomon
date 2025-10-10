@@ -13,7 +13,7 @@
 #include "fconv.h"
 #include "cmdline.h"
 
-const float lp_test_6k_48k[65] = 
+const float lp_hamming_6k[65] =
 {
 	-0.0001, -0.0004, -0.0007, -0.0010, -0.0013, -0.0014, -0.0013, -0.0007, 0.0002, 0.0015, 0.0031, 0.0047, 
 	0.0058, 0.0061, 0.0053, 0.0031, -0.0005, -0.0053, -0.0106, -0.0155, -0.0190, -0.0200, -0.0174, -0.0105, 
@@ -23,7 +23,7 @@ const float lp_test_6k_48k[65] =
 	-0.0013, -0.0010, -0.0007, -0.0004, -0.0001
 };
 
-const std::complex<float> lp_test_6k_48k_c[65] = 
+const std::complex<float> lp_hamming_6k_c[65] =
 {
 	{-0.0001, 0}, {-0.0004, 0}, {-0.0007, 0}, {-0.0010, 0}, {-0.0013, 0}, {-0.0014, 0}, {-0.0013, 0}, {-0.0007, 0}, 
 	{0.0002, 0}, {0.0015, 0}, {0.0031, 0}, {0.0047, 0}, {0.0058, 0}, {0.0061, 0}, {0.0053, 0}, {0.0031, 0}, 
@@ -78,12 +78,12 @@ int main(int argc, char **argvp)
 static void testDirectReal(void)
 {
     auto f = fopen("dsp_conv.txt", "w");
-    auto conv = util::convolve<float>(rsig.data(), rsig.size(), lp_test_6k_48k, TEST_COEFF_SIZE);
+    auto conv = util::convolve<float>(rsig.data(), rsig.size(), lp_hamming_6k, TEST_COEFF_SIZE);
     util::printReal(f, conv);
     fclose(f);
 
     f = fopen("dsp_conv_full.txt", "w");
-    conv = util::fullconvolve<float>(rsig.data(), rsig.size(), lp_test_6k_48k, TEST_COEFF_SIZE);
+    conv = util::fullconvolve<float>(rsig.data(), rsig.size(), lp_hamming_6k, TEST_COEFF_SIZE);
     util::printReal(f, conv);
     fclose(f);
 }
@@ -91,20 +91,19 @@ static void testDirectReal(void)
 static void testDirectComplex(void)
 {
     auto f = fopen("dsp_conv_c.txt", "w");
-    auto conv = util::convolve<std::complex<float>>(csig.data(), csig.size(), lp_test_6k_48k_c, TEST_COEFF_SIZE);
+    auto conv = util::convolve<std::complex<float>>(csig.data(), csig.size(), lp_hamming_6k_c, TEST_COEFF_SIZE);
     util::printComplex(f, conv);
     fclose(f);
 
     f = fopen("dsp_conv_full_c.txt", "w");
-    conv = util::convolve<std::complex<float>>(csig.data(), csig.size(), lp_test_6k_48k_c, TEST_COEFF_SIZE);
+    conv = util::convolve<std::complex<float>>(csig.data(), csig.size(), lp_hamming_6k_c, TEST_COEFF_SIZE);
     util::printComplex(f, conv);
     fclose(f);
 }
 
 static void testDftReal(void)
-{
-    FILE *f = fopen("dsp_fconv.txt", "w");
-    util::fconv dftconv { lp_test_6k_48k, TEST_COEFF_SIZE, TEST_SIG_SIZE };
+{   FILE *f = fopen("dsp_fconv.txt", "w");
+    util::fconv dftconv { lp_hamming_6k, TEST_COEFF_SIZE, TEST_SIG_SIZE };
     auto conv = dftconv.convolve(rsig.data());
     util::printReal(f, conv);
     fclose(f);
@@ -113,7 +112,7 @@ static void testDftReal(void)
 static void testDftComplex(void)
 {
     FILE *f = fopen("dsp_fconv_c.txt", "w");
-    util::fconv dftconv { lp_test_6k_48k_c, TEST_COEFF_SIZE, TEST_SIG_SIZE };
+    util::fconv dftconv { lp_hamming_6k_c, TEST_COEFF_SIZE, TEST_SIG_SIZE };
     auto conv = dftconv.convolve(csig.data());
     util::printComplex(f, conv);
     fclose(f);

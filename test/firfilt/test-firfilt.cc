@@ -80,7 +80,7 @@ const float test_sig[512] =
     -0.500000, -0.000000, 0.500000, -0.866025, -2.000000, -0.866025, 0.500000
 };
 
-const float lp_test_6k_48k_large[321] =
+const float lp_hamming_6k_large[321] =
 {
 	-0.000078, -0.000160, -0.000149, -0.000051, 0.000080, 0.000167, 0.000159, 0.000057,
     -0.000084, -0.000181, -0.000175, -0.000065, 0.000091, 0.000201, 0.000198, 0.000076,
@@ -125,7 +125,7 @@ const float lp_test_6k_48k_large[321] =
     -0.000078
 };
 
-const float lp_test_6k_48k_small[33] =
+const float lp_hamming_6k_small[33] =
 {
 	-0.000078, -0.001397, -0.002620, -0.002623, 0.000210, 0.006029, 0.011610, 0.010973, -0.000529,
     -0.020731, -0.038075, -0.035347, 0.000847, 0.070015, 0.153954, 0.222946, 0.249630, 0.222946,
@@ -133,13 +133,13 @@ const float lp_test_6k_48k_small[33] =
     0.006029, 0.000210, -0.002623, -0.002620, -0.001397, -0.000078
 };
 
-constexpr size_t tapNumLarge = sizeof(lp_test_6k_48k_large) / sizeof(lp_test_6k_48k_large[0]);
-constexpr size_t tapNumSmall = sizeof(lp_test_6k_48k_small) / sizeof(lp_test_6k_48k_small[0]);
+constexpr size_t tapNumLarge = sizeof(lp_hamming_6k_large) / sizeof(lp_hamming_6k_large[0]);
+constexpr size_t tapNumSmall = sizeof(lp_hamming_6k_small) / sizeof(lp_hamming_6k_small[0]);
 constexpr size_t sigNum = sizeof(test_sig) / sizeof(test_sig[0]);
 
 int main(int argc, char **argvp)
 {
-    dsp::firfilter_ff testFir { util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large) };
+    dsp::firfilter_ff testFir { util::make_aligned_ptr<float>(tapNumLarge, lp_hamming_6k_large) };
 
     FILE *f = fopen("ffilt-float.txt", "w");
 
@@ -158,7 +158,7 @@ int main(int argc, char **argvp)
     auto outc = util::make_aligned_ptr<util::complex_f>(64);
     auto sigc = std::make_unique<util::complex_f[]>(sigNum);
 
-    dsp::firfilter_cc testFirc { util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large) };
+    dsp::firfilter_cc testFirc { util::make_aligned_ptr<float>(tapNumLarge, lp_hamming_6k_large) };
 
     for (size_t i=0;i < sigNum;i++)
         sigc[i] = util::complex_f { test_sig[i], 0.0f };

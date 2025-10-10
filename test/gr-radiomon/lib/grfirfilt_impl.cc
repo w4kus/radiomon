@@ -13,7 +13,7 @@
 namespace gr {
 namespace radiomon {
 
-const float lp_test_6k_48k_large[321] =
+const float lp_hamming_6k_large[321] =
 {
 	-0.000078, -0.000160, -0.000149, -0.000051, 0.000080, 0.000167, 0.000159, 0.000057,
     -0.000084, -0.000181, -0.000175, -0.000065, 0.000091, 0.000201, 0.000198, 0.000076,
@@ -58,7 +58,7 @@ const float lp_test_6k_48k_large[321] =
     -0.000078
 };
 
-constexpr size_t tapNumLarge = sizeof(lp_test_6k_48k_large) / sizeof(lp_test_6k_48k_large[0]);
+constexpr size_t tapNumLarge = sizeof(lp_hamming_6k_large) / sizeof(lp_hamming_6k_large[0]);
 
 template<typename T>
 typename grfirfilt<T>::sptr grfirfilt<T>::make()
@@ -88,7 +88,7 @@ grfirfilt_impl<float>::grfirfilt_impl()
                      gr::io_signature::make(
                          1 /* min outputs */, 1 /*max outputs */, sizeof(float)))
 {
-    d_FilterF = std::make_unique<dsp::firfilter_ff>(util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large));
+    d_FilterF = std::make_unique<dsp::firfilter_ff>(util::make_aligned_ptr<float>(tapNumLarge, lp_hamming_6k_large));
 }
 
 template<>
@@ -99,7 +99,7 @@ grfirfilt_impl<gr_complex>::grfirfilt_impl()
                      gr::io_signature::make(
                          1 /* min outputs */, 1 /*max outputs */, sizeof(gr_complex)))
 {
-    d_FilterC = std::make_unique<dsp::firfilter_cc>(util::make_aligned_ptr<float>(tapNumLarge, lp_test_6k_48k_large));
+    d_FilterC = std::make_unique<dsp::firfilter_cc>(util::make_aligned_ptr<float>(tapNumLarge, lp_hamming_6k_large));
 }
 
 /*
