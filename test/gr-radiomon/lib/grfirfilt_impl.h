@@ -19,11 +19,6 @@ class grfirfilt_impl : public grfirfilt<T>
 {
 private:
 
-    // Since the radio-mon's blocks require a second template paramter
-    // of a type compatible with std::function, and I was unable to
-    // get it to work with pybind, we'll declare two versions of
-    // dsp::firfilter, one float and one complex, and use template
-    // specializations.
     std::unique_ptr<dsp::firfilter_ff> d_FilterF;
     std::unique_ptr<dsp::firfilter_cc> d_FilterC;
 

@@ -23,6 +23,7 @@ namespace py = pybind11;
 // BINDING_FUNCTION_PROTOTYPES(
     void bind_grfirfilt(py::module& m);
     void bind_grfirdecim(py::module& m);
+    void bind_grfirinterp(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -53,5 +54,6 @@ PYBIND11_MODULE(radiomon_python, m)
     // BINDING_FUNCTION_CALLS(
     bind_grfirfilt(m);
     bind_grfirdecim(m);
+    bind_grfirinterp(m);
     // ) END BINDING_FUNCTION_CALLS
 }
