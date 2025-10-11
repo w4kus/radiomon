@@ -9,7 +9,7 @@
 
 #include "firinterp.h"
 #include "cmdline.h"
-#include "aligned_ptr.h"
+#include "aligned-ptr.h"
 
 // 4K @ 48Ksps
 const float test_sig[256] =

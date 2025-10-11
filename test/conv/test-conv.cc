@@ -9,7 +9,7 @@
 #include <complex>
 #include <string>
 #include "conv.h"
-#include "conv_full.h"
+#include "conv-full.h"
 #include "fconv.h"
 #include "cmdline.h"
 

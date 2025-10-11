@@ -8,7 +8,7 @@
 #include <complex>
 
 #include "block.h"
-#include "aligned_ptr.h"
+#include "aligned-ptr.h"
 #include "firfilt.h"
 #include "wrap.h"
 

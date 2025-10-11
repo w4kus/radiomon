@@ -7,7 +7,7 @@
 #include <memory>
 #include <complex>
 #include <type_traits>
-#include <aligned_ptr.h>
+#include <aligned-ptr.h>
 #include <vector>
 
 #include "firfilt.h"

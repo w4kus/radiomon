@@ -7,7 +7,7 @@
 
 #include "grfirdecim_impl.h"
 #include <gnuradio/io_signature.h>
-#include "../radiomon/utils/aligned_ptr.h"
+#include "../radiomon/utils/aligned-ptr.h"
 
 namespace gr {
 namespace radiomon {

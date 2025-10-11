@@ -7,7 +7,7 @@
 #include <functional>
 #include <type_traits>
 
-#include "aligned_ptr.h"
+#include "aligned-ptr.h"
 
 namespace dsp {
 

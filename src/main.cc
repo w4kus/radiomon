@@ -4,7 +4,7 @@
 #include "dmr-mon.h"
 #include "sync.h"
 #include "log.h"
-#include "zmq_stream.h"
+#include "zmq-stream.h"
 
 #if 0
 #define MSEC(x) (x*1000)

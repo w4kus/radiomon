@@ -9,7 +9,7 @@
 
 #include "firdecim.h"
 #include "cmdline.h"
-#include "aligned_ptr.h"
+#include "aligned-ptr.h"
 #include "cmemset.h"
 
 // 8K @ 48Ksps
