@@ -49,7 +49,7 @@ public:
         {
             std::move_backward(m_State.begin(), m_State.end() - 1, m_State.end());
             m_State[0] = inBlock[i];
-            util::dot_prod(&outBlock[i], &m_State[0], m_Taps.get(), m_Taps.size());
+            dot_prod(&outBlock[i], &m_State[0], m_Taps.get(), m_Taps.size());
         }
     }
 

@@ -10,10 +10,16 @@
 #include <cstring>
 #include "cmemset.h"
 
-namespace util {
+// See the 'using' statement at the bottom to set which library to use; default
+// is Volk.
 
 //////////////////////////////////////////////////////////////////////////////
-// Volk dot product specializations
+// Volk specializations
+namespace util {
+    namespace math {
+        namespace volk {
+
+// dot product
 template<typename T, typename U, typename V>
 void dot_prod(T *out, const U *in, const V *taps, unsigned int num_points)
 {
@@ -30,5 +36,18 @@ inline void dot_prod(std::complex<float> *out, const std::complex<float> *in, co
 {
     volk_32fc_32f_dot_prod_32fc(out, in, taps, num_points);
 }
+}}}
 
-}
+//////////////////////////////////////////////////////////////////////////////
+// ARM Cortex-M specializations (future)
+namespace util {
+    namespace math {
+        namespace cmsisdsp {
+
+
+}}}
+
+// Set which library namespace to use:
+// * util::math::volk
+// * util::math::cmsisdsp (future)
+using namespace util::math::volk;
