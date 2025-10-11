@@ -10,7 +10,6 @@
 #include "block.h"
 #include "aligned-ptr.h"
 #include "firfilt.h"
-#include "wrap.h"
 
 namespace dsp {
 

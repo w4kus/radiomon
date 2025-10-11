@@ -9,7 +9,7 @@
 #include <complex>
 #include <algorithm>
 #include <cassert>
-#include "wrap.h"
+#include "rm-math.h"
 
 #include "block.h"
 
