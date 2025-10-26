@@ -1,0 +1,39 @@
+// Copyright (c) 2025 John Mark White -- US Amateur Radio License: W4KUS
+//
+// Licensed under the MIT License - see LICENSE file for details.
+
+#pragma once
+
+#include <type_traits>
+#include "aligned-ptr.h"
+
+namespace util {
+
+/*! \brief Simple one sample delay block.
+ *
+ */
+
+template <typename T>
+class delay
+{
+    static_assert(is_std_complex_v<T> || (std::is_arithmetic<T>::value == std::true_type()));
+
+public:
+
+    delay() : m_Value { 0 } { }
+
+    //! Insert a new value into the block
+    //! @param [in] newValue The value to insert.
+    //! @return     The currently stored value.
+    T operator<<(const T newValue)
+    {
+        T res = m_Value;
+        m_Value = newValue;
+        return res;
+    }
+
+private:
+    T m_Value;
+};
+
+}
