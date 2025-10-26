@@ -19,10 +19,13 @@ template<typename T>
 class sine_source_base
 {
 protected:
+    sine_source_base() { }
+
     T m_Freq;
     T m_Phase;
     T m_Gain;
 
+public:
     //! Return the current frequency in radians / sample.
     T frequency() { return m_Freq; }
 
