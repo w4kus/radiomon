@@ -41,14 +41,12 @@ using func_cf = void(const util::aligned_ptr<std::complex<float>>&, util::aligne
 template<typename T>
 class block
 {
-public:
+protected:
     block() { }
     block(const block &) = delete;
     block& operator=(const block &) = delete;
 
     auto get_processer() { return process; }
-
-protected:
 
     std::function<T> process;
 };
