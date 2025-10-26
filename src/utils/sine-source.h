@@ -11,7 +11,7 @@
 
 namespace util {
 
-/*! \brief Sinusoidal Signal Generator Protected Base Class
+/*! \brief Sinusoidal Signal Generator Common Routines
  *
  */
 
@@ -23,7 +23,7 @@ protected:
     T m_Phase;
     T m_Gain;
 
-    //! Return the current in frequency in radians / sample.
+    //! Return the current frequency in radians / sample.
     T frequency() { return m_Freq; }
 
     //! Set a new frequency.
@@ -36,7 +36,7 @@ protected:
     //! Return the current gain.
     T gain() { return m_Gain; }
 
-    //! Set a new frequency.
+    //! Set a new gain.
     //! @param [in] gain The new gain.
     void setGain(T gain)
     {
@@ -71,7 +71,7 @@ public:
     //! Calculate and return a set of samples
     //! @param [inout] outBlock   An initialzed *aligned_ptr* with the required size which
     //!                           will be returned with the samples.
-    void sig(aligned_ptr<T> &outBlock)
+    void get(aligned_ptr<T> &outBlock)
     {
         for (size_t i=0;i < outBlock.size();i++)
         {
@@ -107,7 +107,7 @@ public:
     //! Calculate and return a set of samples
     //! @param [inout] outBlock   An initialzed *aligned_ptr* with the required size which
     //!                           will be returned with the samples.
-    void sig(aligned_ptr<complex_f> &out)
+    void get(aligned_ptr<complex_f> &out)
     {
         for (size_t i=0;i < out.size();i++)
         {
