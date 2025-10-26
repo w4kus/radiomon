@@ -6,10 +6,11 @@
 
 #include <cstring>
 #include <cassert>
-#include <volk/volk.h>
 #include <memory>
 #include <iterator>
 #include <cstddef>
+
+#include "rm-math.h"
 
 namespace util {
 
@@ -22,21 +23,23 @@ struct is_std_complex<std::complex<T>> : std::true_type { };
 template<typename T>
 constexpr bool is_std_complex_v = is_std_complex<std::complex<T>>::value;
 
-typedef class std::complex<float> complex_f;
+using complex_f = std::complex<float>;
 
-/*! \brief Container for an aligned buffer compatible with the
- * [Volk](https://www.libvolk.org/) Libray. It is both movable and copyable
- * and has random access iterator support.
+/*! \brief Container for an aligned buffer which may be required depending
+ * on the system on which the system is running and the math library being used.
+ * It is both movable and copyable and has random access iterator support.
  *
- * This is the main container used throughout *dmr-mon* to pass sample blocks
+ * This is the main container used throughout *radiomon* to pass sample blocks
  * down the chains. You must use this when sourcing or sinking samples.
  * Using this frees the block implementations from having to ensure the buffers
  * it handles are properly aligned.
  *
  * You can also use it for any buffer requirements as long as it is for arithmetic and
- * complex types. This has similiar form to C++ smart pointer
- * containers. See examples throughout the source code, especially in
- * the *block* directory.
+ * complex types. This has similiar form to C++ smart pointer containers with the
+ * one big difference being that *aligned_ptr* types have fixed sized buffers which
+ * are determined at instantiation.
+ *
+ * See examples throughout the source code, especially in the *block* directory.
  */
 
 template<typename T>
@@ -257,14 +260,14 @@ private:
     {
         if (m_Ptr)
         {
-            volk_free(m_Ptr);
+            rm_math::rm_free(m_Ptr);
             m_Ptr = nullptr;
         }
 
         m_Size = 0;
     }
 
-    void create_ptr(size_t size) { m_Ptr = (T *)volk_malloc(size * sizeof(T), volk_get_alignment()); }
+    void create_ptr(size_t size) { m_Ptr = rm_math::rm_malloc<T>(size * sizeof(T)); }
 
     // RAM usage
     T* m_Ptr;
