@@ -50,6 +50,7 @@ public:
     //! Interpolate a block of a signal.
     //! @param [in]     inBlock     The data to be interpolated.
     //! @param [out]    outBlock    The interpoldated data which will be the size of *inBlock* * **L**.
+    //!                             *outBlock* shall be empty.
     void interp(const util::aligned_ptr<T> &inBlock, util::aligned_ptr<T> &outBlock)
     {
         const size_t outBlockSize = inBlock.size() * m_L;
