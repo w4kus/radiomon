@@ -1,6 +1,6 @@
 project('dmr-mon', 'cpp',
 	version : '0.0.1',
-	license : 'GPL3',
+	license : 'MIT',
 	default_options: ['cpp_std=c++14'],
 	meson_version : '>= 0.60.0')
 
