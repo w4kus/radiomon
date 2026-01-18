@@ -43,7 +43,7 @@ public:
     //! @param [in] gain The new gain.
     void setGain(T gain)
     {
-        m_Freq = gain;
+        m_Gain = gain;
     }
 };
 
@@ -76,14 +76,21 @@ public:
     //!                           will be returned with the samples.
     void get(aligned_ptr<T> &outBlock)
     {
+        auto v1 = make_aligned_ptr<T>(outBlock.size());
+        auto v2 = make_aligned_ptr<T>(outBlock.size());
+
+        // Set up a vector of phases
         for (size_t i=0;i < outBlock.size();i++)
         {
-            outBlock[i] = base::m_Gain * rm_math::cos(base::m_Phase);
+            v1[i] = base::m_Phase;
 
             base::m_Phase += base::m_Freq;
             if (base::m_Phase > (2 * M_PI))
                 base::m_Phase -= 2 * M_PI;
         }
+
+        rm_math::blk_cos(&v2[0], v1.get(), v1.size());
+        rm_math::vect_scaler_mult(&outBlock[0], v2.get(), base::m_Gain, outBlock.size());
     }
 };
 
@@ -91,13 +98,13 @@ public:
  *
  */
 template<>
-class sine_source<complex_f> : public sine_source_base<float>
+class sine_source<rm_math::complex_f> : public sine_source_base<float>
 {
 public:
     sine_source() = delete;
 
     //! Create a new instance.
-    //! @param [in] freq    The initial frequency in radians / sample.
+    //! @param [in] freq    The frequency in radians / sample.
     //! @param [in] phase   The initial phase in radians.
     //! @param [in] gain    The **linear** gain.
     sine_source(float freq, float phase = 0.0f, float gain = 1.0f)
@@ -110,17 +117,35 @@ public:
     //! Calculate and return a set of samples
     //! @param [inout] outBlock   An initialzed *aligned_ptr* with the required size which
     //!                           will be returned with the samples.
-    void get(aligned_ptr<complex_f> &out)
+    void get(aligned_ptr<rm_math::complex_f> &outBlock)
     {
-        for (size_t i=0;i < out.size();i++)
+        auto v1 = make_aligned_ptr<float>(outBlock.size());
+        auto v2 = make_aligned_ptr<float>(outBlock.size());
+        auto phase = make_aligned_ptr<float>(outBlock.size());
+
+        // Set up a vector of phases
+        for (size_t i=0;i < outBlock.size();i++)
         {
-            out[i].real(m_Gain * rm_math::cos(m_Phase));
-            out[i].imag(m_Gain * rm_math::sin(m_Phase));
+            phase[i] = m_Phase;
 
             m_Phase += m_Freq;
             if (m_Phase > (2 * M_PI))
                 m_Phase -= 2 * M_PI;
         }
+
+        // real part (I)
+        rm_math::blk_cos(&v1[0], phase.get(), v1.size());
+        rm_math::vect_scaler_mult(&v2[0], v1.get(), m_Gain, v2.size());
+
+        for (size_t i=0;i < outBlock.size();i++)
+            outBlock[i].real(v2[i]);
+
+        // imaginary part (Q)
+        rm_math::blk_sin(&v1[0], phase.get(), v1.size());
+        rm_math::vect_scaler_mult(&v2[0], v1.get(), m_Gain, v2.size());
+
+        for (size_t i=0;i < outBlock.size();i++)
+            outBlock[i].imag(v1[i]);
     }
 };
 
