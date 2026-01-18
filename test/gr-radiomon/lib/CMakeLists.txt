@@ -15,6 +15,12 @@ list(APPEND radiomon_sources
     grfirfilt_impl.cc
     grfirdecim_impl.cc
     grfirinterp_impl.cc
+    grcarrier_sync_impl.cc
+    ../radiomon/blocks/carrier-sync.cc
+    ../radiomon/utils/rm_math.cc
+    ../radiomon/utils/loop-filter.cc
+    ../radiomon/utils/nco.cc
+    ../radiomon/utils/freq-est.cc
 )
 
 set(radiomon_sources "${radiomon_sources}" PARENT_SCOPE)

@@ -9,5 +9,6 @@
 install(FILES
     radiomon_grfirfilt.block.yml
     radiomon_grfirdecim.block.yml
-    radiomon_grfirinterp.block.yml DESTINATION share/gnuradio/grc/blocks
+    radiomon_grfirinterp.block.yml
+    radiomon_grcarrier_sync.block.yml DESTINATION share/gnuradio/grc/blocks
 )

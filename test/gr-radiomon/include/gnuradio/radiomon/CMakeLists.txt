@@ -13,5 +13,6 @@ install(FILES
     api.h
     grfirfilt.h
     grfirdecim.h
-    grfirinterp.h DESTINATION include/gnuradio/radiomon
+    grfirinterp.h
+    grcarrier_sync.h DESTINATION include/gnuradio/radiomon
 )
