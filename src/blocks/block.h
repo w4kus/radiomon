@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <type_traits>
+#include <stdarg.h>
 
 #include "aligned-ptr.h"
 
@@ -41,13 +42,24 @@ using func_cf = void(const util::aligned_ptr<std::complex<float>>&, util::aligne
 template<typename T>
 class block
 {
+public:
+    auto getProcesser() { return process; }
+
+    uint32_t getSamplingRate() { return m_SamplingRate; }
+    void  setSamplingRate(uint32_t rate) { m_SamplingRate = rate; }
+
 protected:
-    block() { }
+    block() : m_SamplingRate { 0 }
+    { }
+
     block(const block &) = delete;
     block& operator=(const block &) = delete;
 
-    auto get_processer() { return process; }
+    block(const block&&) = delete;
+    block& operator=(block &&) = delete;
 
     std::function<T> process;
+
+    uint32_t m_SamplingRate;
 };
 }
