@@ -6,6 +6,7 @@
 
 #include "aligned-ptr.h"
 #include "delay.h"
+#include "rm-math.h"
 
 namespace util {
 
@@ -24,27 +25,26 @@ class freq_est
 public:
     freq_est() = delete;
 
-    freq_est(const freq_est&) = delete;
-    freq_est& operator=(const freq_est&) = delete;
-
-    freq_est(freq_est&&) = delete;
-    freq_est& operator=(freq_est&&) = delete;
-
     //! Create an instance of the estimater.
-    //! @param [in] scale   The value to use to scale the result. If set to 1.0 (no scaling),
-    //!                     the output is in units of radians / sample. If you want the
-    //!                     output to be in Hz, then use **Fs/(2*PI)** where **Fs**
-    //!                     is the sampling rate.
+    //! @param [in] scale   The value to use to scale the result. Some possible values:
+    //!     - **1.0** (no scaling) returns a value in radians.
+    //!     - **2*PI/Fs** where Fs is the sampling rate, returns a value in radians / sample.
+    //!     - **Fs/2*pi** returns a value in Hz.
     freq_est(float scale) : m_Scale { scale } { }
 
     //! Estimate a block of samples.
     //! @param [in] in      The block of samples with which to make an estimation.
+    //!
     //! @return The scaled estimate.
-    float estimate(const aligned_ptr<complex_f> &in);
+    float estimate(const aligned_ptr<rm_math::complex_f> &in);
+
+    //! Update the scaling factor.
+    //! @param [in] scale   The new scaling factor.
+    void setScale(float scale) { m_Scale = scale; }
 
 private:
     float m_Scale;
-    delay<complex_f> m_Delay;
+    delay<rm_math::complex_f> m_Delay;
 };
 
 }

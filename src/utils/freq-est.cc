@@ -7,13 +7,13 @@
 
 using namespace util;
 
-float freq_est::estimate(const aligned_ptr<complex_f> &in)
+float freq_est::estimate(const aligned_ptr<rm_math::complex_f> &in)
 {
     // delayed sample vector
-    auto v2 = make_aligned_ptr<complex_f>(in.size());
+    auto v2 = make_aligned_ptr<rm_math::complex_f>(in.size());
 
     // result vector
-    auto v3 = make_aligned_ptr<complex_f>(in.size());
+    auto v3 = make_aligned_ptr<rm_math::complex_f>(in.size());
 
     // Run the data through the delay block to make the second vector
     for (size_t i=0;i < in.size();i++)
@@ -23,7 +23,7 @@ float freq_est::estimate(const aligned_ptr<complex_f> &in)
     rm_math::mult_conj(&v3[0], in.get(), v2.get(), in.size());
 
     // Sum the result to average out the noise
-    complex_f sum = { 0.0f, 0.0f };
+    rm_math::complex_f sum = { 0.0f, 0.0f };
     for (size_t i=0;i < in.size();i++)
         sum += v3[i];
 
