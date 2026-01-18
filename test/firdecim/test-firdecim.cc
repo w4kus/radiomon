@@ -112,17 +112,17 @@ int main(int argc, char **argvp)
     f = fopen("firdecim-complex.txt", "w");
 
     dsp::firdecim_cc decimc { M, util::make_aligned_ptr<float>(tapNum, lp_hamming_8p5K) };
-	util::aligned_ptr<util::complex_f> cout { };
-	auto csig = util::make_aligned_ptr<util::complex_f>(sigNum);
+	util::aligned_ptr<rm_math::complex_f> cout { };
+	auto csig = util::make_aligned_ptr<rm_math::complex_f>(sigNum);
 
 	for (size_t i=0;i < sigNum;i++)
 		csig[i] = { test_sig[i], 0.0f };
 
-	auto cin = util::make_aligned_ptr<util::complex_f>(chunkSize);
+	auto cin = util::make_aligned_ptr<rm_math::complex_f>(chunkSize);
 
     for (size_t i=0;i < chunkNum;i++)
     {
-		std::memcpy(&cin[0], &csig[i * chunkSize], chunkSize * sizeof(util::complex_f));
+		std::memcpy(&cin[0], &csig[i * chunkSize], chunkSize * sizeof(rm_math::complex_f));
 		decimc.decim(cin, cout);
         util::printComplex(f, cout.size(), cout.get());
     }

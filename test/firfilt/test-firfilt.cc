@@ -155,17 +155,17 @@ int main(int argc, char **argvp)
     fclose(f);
 
     f = fopen("ffilt-complex.txt", "w");
-    auto outc = util::make_aligned_ptr<util::complex_f>(64);
-    auto sigc = std::make_unique<util::complex_f[]>(sigNum);
+    auto outc = util::make_aligned_ptr<rm_math::complex_f>(64);
+    auto sigc = std::make_unique<rm_math::complex_f[]>(sigNum);
 
     dsp::firfilter_cc testFirc { util::make_aligned_ptr<float>(tapNumLarge, lp_hamming_6k_large) };
 
     for (size_t i=0;i < sigNum;i++)
-        sigc[i] = util::complex_f { test_sig[i], 0.0f };
+        sigc[i] = rm_math::complex_f { test_sig[i], 0.0f };
 
     for (size_t i=0;i < 8;i++)
     {
-        auto seg = util::make_aligned_ptr<util::complex_f>(64, &sigc[i * 64]);
+        auto seg = util::make_aligned_ptr<rm_math::complex_f>(64, &sigc[i * 64]);
         testFirc.filter(seg, outc);
         util::printComplex(f, out.size(), outc.get());
     }
