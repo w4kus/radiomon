@@ -1,3 +1,7 @@
+// Copyright (c) 2025 John Mark White -- US Amateur Radio License: W4KUS
+//
+// Licensed under the MIT License - see LICENSE file for details.
+
 #pragma once
 
 #include <chrono>
@@ -8,7 +12,7 @@ class timer
 {
 public:
 
-    typedef std::chrono::steady_clock::time_point timer_t;
+    using timer_t = std::chrono::steady_clock::time_point;
 
     timer() = delete;
 
