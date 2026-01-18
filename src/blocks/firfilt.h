@@ -40,7 +40,7 @@ public:
 
     //! Filter a segment of a signal.
     //! @param [in]  inBlock     The data to be filtered.
-    //! @param [out] outBlock    The filtered data.
+    //! @param [out] outBlock    The filtered data. *outBlock* shall be empty,
     void filter(const util::aligned_ptr<T> &inBlock, util::aligned_ptr<T> &outBlock)
     {
         outBlock = util::make_aligned_ptr<T>(inBlock.size());
@@ -59,7 +59,7 @@ private:
     util::aligned_ptr<T> m_State;
 };
 
-typedef class firfilter<float,dsp::func_ff>                 firfilter_ff;
-typedef class firfilter<std::complex<float>,dsp::func_cc>   firfilter_cc;
+using firfilter_ff = firfilter<float, dsp::func_ff>;
+using firfilter_cc = firfilter<std::complex<float>, dsp::func_cc>;
 
 }
