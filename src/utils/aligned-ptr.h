@@ -14,17 +14,6 @@
 
 namespace util {
 
-template<typename T>
-struct is_std_complex : std::false_type { };
-
-template<typename T>
-struct is_std_complex<std::complex<T>> : std::true_type { };
-
-template<typename T>
-constexpr bool is_std_complex_v = is_std_complex<std::complex<T>>::value;
-
-using complex_f = std::complex<float>;
-
 /*! \brief Container for an aligned buffer which may be required depending
  * on the system on which the system is running and the math library being used.
  * It is both movable and copyable and has random access iterator support.
@@ -117,7 +106,6 @@ public:
         if (i < m_Size)
             return m_Ptr[i];
 
-        assert(1 && "aligned_buffer: index out of range");
         return m_Ptr[0];
     }
 
@@ -127,7 +115,6 @@ public:
         if (i < m_Size)
             return m_Ptr[i];
 
-        assert(1 && "aligned_buffer: index out of range");
         return m_Ptr[0];
     }
 
@@ -144,13 +131,13 @@ public:
     }
 
     //! Check if the instance has a null pointer (e.g., in a cleared state).
-    const bool invalid() const
+    const bool empty() const
     {
         return (bool)!m_Ptr;
     }
 
     //! Reset the instance to a default contructed state
-    void reset() const
+    void reset()
     {
         del_ptr();
     }

@@ -25,11 +25,17 @@ public:
     //! Insert a new value into the block
     //! @param [in] newValue The value to insert.
     //! @return     The currently stored value.
-    T operator<<(const T newValue)
+    T operator<<(const T &newValue)
     {
         T res = m_Value;
         m_Value = newValue;
         return res;
+    }
+
+    //! Get the current value stored in the block
+    T get()
+    {
+        return m_Value;
     }
 
 private:
