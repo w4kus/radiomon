@@ -44,14 +44,14 @@ public:
     //! Decimate a block of a signal.
     //! @param [in]     inBlock     The data to be decimated.
     //! @param [out]    outBlock    The decimated data which will be the size of *inBlock* / **M** or
-    //!                             the size of *inBlock* / **M** + 1.
+    //!                             the size of *inBlock* / **M** + 1. *outlBock* shall be empty.
     void decim(const util::aligned_ptr<T> &inBlock, util::aligned_ptr<T> &outBlock)
     {
         // If the sampling buffer is in an invalid state, validate it with the size of the
         // current block + the decimation factor.
         // Otherwise, check if it can hold the current block plus the current contents and,
         // if not, re-allocate a larger buffer and continue.
-        if (m_SamplingBuffer.invalid())
+        if (m_SamplingBuffer.empty())
             m_SamplingBuffer = util::make_aligned_ptr<T>(inBlock.size() + m_M);
         else if ((inBlock.size() + m_SamplingCount) > m_SamplingBuffer.size())
             m_SamplingBuffer = util::make_aligned_ptr<T>(inBlock.size() + m_SamplingCount + m_M, m_SamplingBuffer.get());
