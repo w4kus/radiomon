@@ -4,7 +4,7 @@
 
 #include "nco.h"
 
-using namespace util;
+using namespace comps;
 
 rm_math::complex_f nco::adjustPhase(float error)
 {

@@ -19,7 +19,7 @@ int main(int argc, char **argvp)
 {
     auto sigBuff = util::make_aligned_ptr<rm_math::complex_f>(sigSize);
     util::sine_source<rm_math::complex_f> sig{ freq };
-    util::freq_est est{ Fs/(2*M_PI) };
+    comps::freq_est est{ Fs/(2*M_PI) };
 
     sig.get(sigBuff);
     printf("estimate = %06f\n", est.estimate(sigBuff));

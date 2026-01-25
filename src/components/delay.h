@@ -7,7 +7,7 @@
 #include <type_traits>
 #include "aligned-ptr.h"
 
-namespace util {
+namespace comps {
 
 /*! \brief Simple one sample delay block.
  *
@@ -16,7 +16,7 @@ namespace util {
 template <typename T>
 class delay
 {
-    static_assert(is_std_complex_v<T> || (std::is_arithmetic<T>::value == std::true_type()));
+    static_assert(util::is_std_complex_v<T> || (std::is_arithmetic<T>::value == std::true_type()));
 
 public:
 

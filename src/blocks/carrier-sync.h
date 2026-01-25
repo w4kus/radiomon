@@ -34,12 +34,12 @@ class carrier_sync : public block<func_cc>
 public:
 
     //! Create an instance of the carrier synchronizer.
-    //! @param [in] Kp          The proportional constant of the NCO. See the *loop-filter* documention for details.
-    //! @param [in] Ki          The integral constant of the NCO. See the *loop-filter* documention for details.
-    //! @param [in] errorSize   The size of the PLL error buffer. This will contain the
-    //!                         error calculations of the PLL which and be used for
-    //!                         testing and debugging. See the *port* documention for details.
-    //!                         By default, this is set to zero which does not generate an error signal.
+    //! @param [in] Kp              The proportional constant of the NCO. See the *loop-filter* documention for details.
+    //! @param [in] Ki              The integral constant of the NCO. See the *loop-filter* documention for details.
+    //! @param [in] errorPortSize   The size of the PLL error buffer. This will contain the
+    //!                             error calculations of the PLL which and be used for
+    //!                             testing and debugging. See the *port* documention for details.
+    //!                             By default, this is set to zero which does not generate an error signal.
     carrier_sync(const float Kp, const float Ki, const size_t errorPortSize = 0);
 
     //! Generate a sinusoid fragment from the input samples which is frequency and phase aligned with the
@@ -57,9 +57,9 @@ public:
     
 private:
 
-    util::loopfilt  m_LoopFilt;
-    util::nco       m_Nco;
-    util::freq_est  m_Est;
+    comps::loopfilt  m_LoopFilt;
+    comps::nco       m_Nco;
+    comps::freq_est  m_Est;
 
     uint32_t m_CurrentSampleRate;
     float m_Error;

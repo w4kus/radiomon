@@ -6,7 +6,7 @@
 
 #include "delay.h"
 
-namespace util {
+namespace comps {
 
 /*! \brief Proportional / Integrator Loop Filter
  *

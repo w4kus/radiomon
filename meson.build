@@ -9,7 +9,6 @@ volk_deps = dependency('volk', version:'>= 2.5')
 fftw_deps = dependency('fftw3f', version: '>= 3.0.0')
 
 inc = include_directories(
-	[ 'src', 'test', 'src/utils', 'src/dmr', 'src/blocks' ])
+	[ 'src', 'test', 'src/utils', 'src/blocks', 'src/components'])
 
-subdir('src')
 subdir('test')

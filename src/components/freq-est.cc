@@ -5,15 +5,15 @@
 #include "freq-est.h"
 #include "rm-math.h"
 
-using namespace util;
+using namespace comps;
 
-float freq_est::estimate(const aligned_ptr<rm_math::complex_f> &in)
+float freq_est::estimate(const util::aligned_ptr<rm_math::complex_f> &in)
 {
     // delayed sample vector
-    auto v2 = make_aligned_ptr<rm_math::complex_f>(in.size());
+    auto v2 = util::make_aligned_ptr<rm_math::complex_f>(in.size());
 
     // result vector
-    auto v3 = make_aligned_ptr<rm_math::complex_f>(in.size());
+    auto v3 = util::make_aligned_ptr<rm_math::complex_f>(in.size());
 
     // Run the data through the delay block to make the second vector
     for (size_t i=0;i < in.size();i++)

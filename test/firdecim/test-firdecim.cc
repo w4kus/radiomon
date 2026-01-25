@@ -10,7 +10,6 @@
 #include "firdecim.h"
 #include "cmdline.h"
 #include "aligned-ptr.h"
-#include "cmemset.h"
 
 // 8K @ 48Ksps
 const float test_sig[256] =

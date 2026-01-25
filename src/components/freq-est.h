@@ -8,7 +8,7 @@
 #include "delay.h"
 #include "rm-math.h"
 
-namespace util {
+namespace comps {
 
 /*! \brief Frequency Estimater
  *
@@ -36,7 +36,7 @@ public:
     //! @param [in] in      The block of samples with which to make an estimation.
     //!
     //! @return The scaled estimate.
-    float estimate(const aligned_ptr<rm_math::complex_f> &in);
+    float estimate(const util::aligned_ptr<rm_math::complex_f> &in);
 
     //! Update the scaling factor.
     //! @param [in] scale   The new scaling factor.

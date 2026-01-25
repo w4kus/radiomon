@@ -10,7 +10,7 @@ namespace util {
 
 /*! \brief Template for time domain convolution.
  *
- * This calculates the convolution of two signals.  Unlike the \ref dsp::conv_full implementation
+ * This calculates the convolution of two signals.  Unlike the util::conv_full implementation
  * template, this skips the zero padded edges.  Therefore, given
  * two signals **b**, of size **m**, and **h**, of size **n**, this
  * produces an output of size m - n + 1.  This implies that **m** must be greater

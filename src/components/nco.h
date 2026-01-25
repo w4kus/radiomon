@@ -7,7 +7,7 @@
 #include "delay.h"
 #include "aligned-ptr.h"
 
-namespace util {
+namespace comps {
 
 /*! \brief Arithmetic Numerically Controlled Ocillator
  *

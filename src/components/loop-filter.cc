@@ -4,7 +4,7 @@
 
 #include "loop-filter.h"
 
-using namespace util;
+using namespace comps;
 
 float loopfilt::filter(float value)
 {

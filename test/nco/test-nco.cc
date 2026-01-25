@@ -20,8 +20,8 @@ int main(int argc, char **argvp)
     auto blk = util::make_aligned_ptr<rm_math::complex_f>(NUM_SAMPLES);
     auto out = util::make_aligned_ptr<rm_math::complex_f>(NUM_SAMPLES);
     auto sig = util::sine_source<rm_math::complex_f>(2 * M_PI / NUM_SAMPLES, M_PI / 2.0f);
-    auto nco = util::nco(1.0f);
-    auto lf = util::loopfilt(0.2667f, 0.01778f);
+    auto nco = comps::nco(1.0f);
+    auto lf = comps::loopfilt(0.2667f, 0.01778f);
     float error = 0.0f;
 
     // Input signal

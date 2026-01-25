@@ -18,9 +18,9 @@ list(APPEND radiomon_sources
     grcarrier_sync_impl.cc
     ../radiomon/blocks/carrier-sync.cc
     ../radiomon/utils/rm_math.cc
-    ../radiomon/utils/loop-filter.cc
-    ../radiomon/utils/nco.cc
-    ../radiomon/utils/freq-est.cc
+    ../radiomon/components/loop-filter.cc
+    ../radiomon/components/nco.cc
+    ../radiomon/components/freq-est.cc
 )
 
 set(radiomon_sources "${radiomon_sources}" PARENT_SCOPE)
@@ -36,6 +36,7 @@ target_include_directories(gnuradio-radiomon
     PUBLIC $<INSTALL_INTERFACE:include>
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../radiomon/dsp>
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../radiomon/utils>
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../radiomon/components>
   )
 set_target_properties(gnuradio-radiomon PROPERTIES DEFINE_SYMBOL "gnuradio_radiomon_EXPORTS")
 
