@@ -9,11 +9,10 @@
 
 namespace comps {
 
-/*! \brief Arithmetic Numerically Controlled Ocillator
+/*! \brief Numerically Controlled Ocillator
  *
- * A NCO which currently generates the output signal arithmetically
- * rather than using a lookup table. Complex signals are generated; the
- * caller can discard one of the components if not needed.
+ * Complex signals are generated; the caller can 
+ * discard one of the components if not needed.
  */
 
 class nco
