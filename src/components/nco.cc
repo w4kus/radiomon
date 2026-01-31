@@ -1,4 +1,4 @@
-// Copyright (c) 2025 John Mark nWhite -- US Amateur Radio License: W4KUS
+// Copyright (c) 2026 John Mark nWhite -- US Amateur Radio License: W4KUS
 //
 // Licensed under the MIT License - see LICENSE file for details.
 
