@@ -1,3 +1,17 @@
+%% Copyright (c) 2026 John Mark White -- US Amateur Radio License: W4KUS
+%%
+%% Licensed under the MIT License - see LICENSE file for details.
+
+%% Write a vector to a text in the form of a C/C++ array.
+%%
+%% Params:
+%% 'fname'  - the filename to use.
+%% 'vname'  - the name of the array.
+%% 'v'      - the vector to use.
+%% 'type'   - either 'real' or 'complex'. If complex, then the values will be
+%%            of the form '{a , 0}' which is compatible with the C++
+%%            std::complex<float> type.
+%% 'cols'   - The number of values per row after which a newline is inserted.
 
 function save_vector(fname, vname, v, type, cols)
 

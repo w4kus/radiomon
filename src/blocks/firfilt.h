@@ -1,4 +1,4 @@
-// Copyright (c) 2025 John Mark White -- US Amateur Radio License: W4KUS
+// Copyright (c) 2026 John Mark White -- US Amateur Radio License: W4KUS
 //
 // Licensed under the MIT License - see LICENSE file for details.
 
@@ -19,7 +19,6 @@ namespace dsp {
  *
  * This provides support for filtering a signal through a finite impulse response
  * (FIR) filter. The signal can be real or complex but only real coefficients are supported.
- * The non-transposed direct form (I/II) is used.
  *
 */
 
