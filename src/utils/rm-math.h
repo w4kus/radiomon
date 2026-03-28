@@ -111,6 +111,9 @@ struct volk
 
     // float rounding to a specified number of fractional digits
     static float round(float value, uint8_t digits);
+
+    // Hz to radians per sample
+    static float hz_to_rps(uint32_t hz, uint32_t Fs) { return 2*M_PI*hz/Fs; }
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -177,6 +180,12 @@ struct cmsis
     static void vect_scaler_add(float *out, const float *v1, const float s, int num_points)
     {
     }
+
+    // float rounding to a specified number of fractional digits
+    static float round(float value, uint8_t digits);
+
+    // Hz to radians per sample
+    static float hz_to_rps(uint32_t hz, uint32_t Fs) { return 2*M_PI*hz/Fs; }
 };
 
 }
