@@ -14,22 +14,99 @@
 
 namespace util {
 
-/*! \brief Container for an aligned buffer which may be required depending
+/*! \file aligned-ptr.h
+ * \brief Container for an aligned buffer which may be required depending
  * on the system on which the system is running and the math library being used.
  * It is both movable and copyable and has random access iterator support.
+ *
+ * \note Static buffer instances are **NOT** copyable, but are movable. A runtime
+ * assert is thrown if a copy is attempted.
  *
  * This is the main container used throughout *radiomon* to pass sample blocks
  * down the chains. You must use this when sourcing or sinking samples.
  * Using this frees the block implementations from having to ensure the buffers
  * it handles are properly aligned.
  *
- * You can also use it for any buffer requirements as long as it is for arithmetic and
- * complex types. This has similiar form to C++ smart pointer containers with the
+ * You can also use it for any buffer requirements as long as it is for arithmetic or
+ * complex types. This has similiar form to C++ smart pointers with the
  * one big difference being that *aligned_ptr* types have fixed sized buffers which
  * are determined at instantiation.
  *
  * See examples throughout the source code, especially in the *block* directory.
+ *
+ * \note Aligment of static buffers are **NOT** guaranteed. The caller is responsible
+ * for ensuring this when creating the buffer if alignment is necessary.
  */
+
+//! Helper functions to intialize an empty instance. You can call these mulitple times
+//! to re-initialize if desired.
+template<typename T>
+class aligned_ptr;
+
+//! Not for static buffer instances
+template<typename T>
+void init_aligned_ptr(aligned_ptr<T> &ap, const size_t size)
+{
+    static_assert(is_std_complex_v<T> || (std::is_arithmetic<T>::value == std::true_type()));
+    if (!ap.m_IsStatic)
+    {
+        ap.del_ptr();
+        ap.create_ptr(size);
+        ap.m_Size = size;
+    }
+}
+
+//! Not for static buffer instances
+template<typename T>
+void init_aligned_ptr(aligned_ptr<T> &ap, const size_t size, const T *values)
+{
+    static_assert(is_std_complex_v<T> || (std::is_arithmetic<T>::value == std::true_type()));
+    if (!ap.m_IsStatic)
+    {
+        ap.del_ptr();
+        ap.create_ptr(size);
+        ap.m_Size = size;
+        std::memcpy(ap.m_Ptr, values, size * sizeof(T));
+    }
+}
+
+//! Not for static buffer instances
+template<typename T>
+void init_aligned_ptr_on_resize(aligned_ptr<T> &ap, const size_t size)
+{
+    static_assert(is_std_complex_v<T> || (std::is_arithmetic<T>::value == std::true_type()));
+    if (!ap.m_IsStatic && (ap.size() != size))
+    {
+        ap.del_ptr();
+        ap.create_ptr(size);
+        ap.m_Size = size;
+    }
+}
+
+//! Not for static buffer instances
+template<typename T>
+void init_aligned_ptr_on_resize(aligned_ptr<T> &ap, const size_t size, const T *values)
+{
+    static_assert(is_std_complex_v<T> || (std::is_arithmetic<T>::value == std::true_type()));
+    if (!ap.m_IsStatic && (ap.size() != size))
+    {
+        ap.del_ptr();
+        ap.create_ptr(size);
+        ap.m_Size = size;
+        std::memcpy(ap.m_Ptr, values, size * sizeof(T));
+    }
+}
+
+//! Only for static buffer instances or to convert dynamic buffer instances
+//! to a static buffer instance.
+template<typename T>
+void init_aligned_ptr_static(aligned_ptr<T> &ap, size_t size, const T *buff)
+{
+    ap.del_ptr();
+    ap.m_Ptr = (T *)buff;
+    ap.m_Size = size;
+    ap.m_IsStatic = true;
+}
 
 template<typename T>
 class aligned_ptr
@@ -38,18 +115,18 @@ class aligned_ptr
 
 public:
 
-    //! default contructor - creates an instance in the cleared state.
-    //! Use one of the *make_aligned_ptr()* helpers to set things up when ready.
-    aligned_ptr() : m_Ptr{nullptr}, m_Size{0} { }
+    //! Default contructor - creates an instance in the cleared state.
+    //! Use one of the *init_aligned_ptr()* helpers to set things up when ready.
+    aligned_ptr() : m_Ptr{nullptr}, m_Size{0}, m_IsStatic{false} { }
 
     //! parametric constuctor #1
-    explicit aligned_ptr(const size_t size) : m_Ptr{nullptr}, m_Size{size}
+    explicit aligned_ptr(const size_t size) : m_Ptr{nullptr}, m_Size{size}, m_IsStatic{false}
     {
         create_ptr(size);
     }
 
     //! parametric constructor #2
-    explicit aligned_ptr(const size_t size, const T *values) : m_Ptr{nullptr}, m_Size{size}
+    aligned_ptr(const size_t size, const T *values) : m_Ptr{nullptr}, m_Size{size}, m_IsStatic{false}
     {
         create_ptr(size);
         std::memcpy(m_Ptr, values, size * sizeof(T));
@@ -58,21 +135,29 @@ public:
     //! destructor
     ~aligned_ptr(){ del_ptr(); }
 
-    // copy constructor
+    //! copy constructor
+    //! \note static buffer aligned_ptrs cannot be copied
     aligned_ptr(const aligned_ptr &other)
     {
+        assert(!other.m_IsStatic);
+
         m_Size = other.m_Size;
+        m_IsStatic = other.m_IsStatic;
         create_ptr(m_Size);
         std::memcpy(m_Ptr, other.m_Ptr, m_Size * sizeof(T));
     }
 
     //! copy assignment constructor
+    //! \note Static buffer aligned_ptrs cannot be copied
     aligned_ptr& operator=(const aligned_ptr &other)
     {
+        assert(!other.m_IsStatic);
+
         if (m_Ptr == other.m_Ptr)
             return *this;
 
         m_Size = other.m_Size;
+        m_IsStatic = other.m_IsStatic;
 
         create_ptr(m_Size);
         std::memcpy(m_Ptr, other.m_Ptr, m_Size * sizeof(T));
@@ -85,6 +170,7 @@ public:
     {
         m_Ptr = std::exchange(other.m_Ptr, nullptr);
         m_Size = std::exchange(other.m_Size, 0);
+        m_IsStatic = std::exchange(other.m_IsStatic, false);
     }
 
     //! move assignment constructor
@@ -96,6 +182,7 @@ public:
         del_ptr();
         m_Ptr = std::exchange(other.m_Ptr, nullptr);
         m_Size = std::exchange(other.m_Size, 0);
+        m_IsStatic = std::exchange(other.m_IsStatic, false);
 
         return *this;
     }
@@ -119,7 +206,7 @@ public:
     }
 
     //! Get the pointer of the contained buffer.
-    const T* get() const
+    const T* data() const
     {
         return m_Ptr;
     }
@@ -137,7 +224,7 @@ public:
     }
 
     //! Reset the instance to a default contructed state
-    void reset()
+    void clear()
     {
         del_ptr();
     }
@@ -245,32 +332,61 @@ private:
 
     void del_ptr()
     {
-        if (m_Ptr)
+        if (!m_IsStatic)
         {
-            rm_math::rm_free(m_Ptr);
-            m_Ptr = nullptr;
-        }
+            if (m_Ptr)
+            {
+                rm_math::rm_free(m_Ptr);
+                m_Ptr = nullptr;
+            }
 
-        m_Size = 0;
+            m_Size = 0;
+        }
     }
 
-    void create_ptr(size_t size) { m_Ptr = rm_math::rm_malloc<T>(size * sizeof(T)); }
+    void create_ptr(size_t size)
+    {
+        if (!m_IsStatic)
+            m_Ptr = rm_math::rm_malloc<T>(size * sizeof(T));
+    }
+
+    friend void init_aligned_ptr<>(aligned_ptr<T> &ap, const size_t size);
+    friend void init_aligned_ptr<>(aligned_ptr<T> &ap, const size_t size, const T *values);
+    friend void init_aligned_ptr_on_resize<>(aligned_ptr<T> &ap, const size_t size);
+    friend void init_aligned_ptr_on_resize<>(aligned_ptr<T> &ap, const size_t size, const T *values);
+    friend void init_aligned_ptr_static<>(aligned_ptr<T> &ap, size_t size, const T *buff);
 
     // RAM usage
     T* m_Ptr;
     size_t m_Size;
+    bool m_IsStatic;
 };
 
-// Helper functions to create an instance using move semantics
+//! Helper functions to create an instance on the heap. If you want to initialize
+//! an empty instance (default constructed), use one of the init_aligned_ptr()
+//! functions at the top of this file which are more efficient than instantiating
+//! and moving a new instance.
 template<typename T>
 aligned_ptr<T> make_aligned_ptr(const size_t size)
 {
+    static_assert(is_std_complex_v<T> || (std::is_arithmetic<T>::value == std::true_type()));
     return std::move(*(new aligned_ptr<T>(size)));
 }
 
 template<typename T>
 aligned_ptr<T> make_aligned_ptr(const size_t size, const T *values)
 {
+    static_assert(is_std_complex_v<T> || (std::is_arithmetic<T>::value == std::true_type()));
     return std::move(*(new aligned_ptr<T>(size, values)));
+}
+
+template<typename T>
+aligned_ptr<T> make_aligned_ptr_static(const size_t size, const T *buffer)
+{
+    static_assert(is_std_complex_v<T> || (std::is_arithmetic<T>::value == std::true_type()));
+    auto *p = new aligned_ptr<T>();
+    init_aligned_ptr_static<T>(*p, size, buffer);
+
+    return std::move(*p);
 }
 }
