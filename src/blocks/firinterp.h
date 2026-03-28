@@ -13,10 +13,13 @@
 
 namespace dsp {
 
-/*! \brief Interpolation using a FIR filter.
+/*! \brief Interpolation using an FIR filter.
  *
- * This implements interpolation using a FIR filter, supplied by
+ * This implements interpolation using an FIR filter, supplied by
  * the user, and zero stuffing. Only real taps are supported.
+ *
+ * \note Consider using the polyphase-baed \link rational-resampler block
+ * since it's a more efficient algorithm.
  */
 
 template<typename T, typename B>
@@ -56,7 +59,7 @@ public:
         const size_t outBlockSize = inBlock.size() * m_L;
 
         auto filterBlock = util::make_aligned_ptr<T>(outBlockSize);
-        outBlock = util::make_aligned_ptr<T>(outBlockSize);
+        util::init_aligned_ptr<T>(outBlock, outBlockSize);
 
         const uint16_t cnt = m_L - 1;
 

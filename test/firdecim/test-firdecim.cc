@@ -88,22 +88,22 @@ int main(int argc, char **argvp)
 	auto sig = util::make_aligned_ptr<float>(chunkSize, test_sig);
 	auto out = util::aligned_ptr<float>{ };
 	decim.decim(sig, out);
-	util::printReal(f, out.size(), out.get());
+	util::printReal(f, out.size(), out.data());
 	idx += chunkSize;
 
 	sig = util::make_aligned_ptr<float>(chunkSize / 2, &test_sig[idx]);
 	decim.decim(sig, out);
-	util::printReal(f, out.size(), out.get());
+	util::printReal(f, out.size(), out.data());
 	idx += chunkSize / 2;
 
 	sig = util::make_aligned_ptr<float>(chunkSize - 12, &test_sig[idx]);
 	decim.decim(sig, out);
-	util::printReal(f, out.size(), out.get());
+	util::printReal(f, out.size(), out.data());
 	idx += chunkSize - 12;
 
 	sig = util::make_aligned_ptr<float>(100, &test_sig[idx]);
 	decim.decim(sig, out);
-	util::printReal(f, out.size(), out.get());
+	util::printReal(f, out.size(), out.data());
 #endif
 
     fclose(f);
@@ -123,7 +123,7 @@ int main(int argc, char **argvp)
     {
 		std::memcpy(&cin[0], &csig[i * chunkSize], chunkSize * sizeof(rm_math::complex_f));
 		decimc.decim(cin, cout);
-        util::printComplex(f, cout.size(), cout.get());
+        util::printComplex(f, cout.size(), cout.data());
     }
 
 	fclose(f);

@@ -24,7 +24,7 @@ void carrier_sync::sync(const util::aligned_ptr<rm_math::complex_f> &inBlock, ut
 {
     auto errorSig = util::make_aligned_ptr<float>(inBlock.size());
 
-    outBlock = util::make_aligned_ptr<rm_math::complex_f>(inBlock.size());
+    util::init_aligned_ptr_on_resize<rm_math::complex_f>(outBlock, inBlock.size());
 
     // Update the estimater scaling factor using the current sampling rate but only
     // if the sampling rate has changed (prevent unnecessary division).

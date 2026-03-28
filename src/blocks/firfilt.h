@@ -15,7 +15,7 @@
 
 namespace dsp {
 
-/*! \brief Filter a signal with a FIR filter.
+/*! \brief Filter a signal with an FIR filter.
  *
  * This provides support for filtering a signal through a finite impulse response
  * (FIR) filter. The signal can be real or complex but only real coefficients are supported.
@@ -42,13 +42,13 @@ public:
     //! @param [out] outBlock    The filtered data. *outBlock* shall be empty,
     void filter(const util::aligned_ptr<T> &inBlock, util::aligned_ptr<T> &outBlock)
     {
-        outBlock = util::make_aligned_ptr<T>(inBlock.size());
+        util::init_aligned_ptr<T>(outBlock, inBlock.size());
 
         for (size_t i=0;i < inBlock.size();i++)
         {
             std::move_backward(m_State.begin(), m_State.end() - 1, m_State.end());
             m_State[0] = inBlock[i];
-            rm_math::dot_prod(&outBlock[i], &m_State[0], m_Taps.get(), m_Taps.size());
+            rm_math::dot_prod(&outBlock[i], m_State.data(), m_Taps.data(), m_Taps.size());
         }
     }
 

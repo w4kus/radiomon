@@ -79,7 +79,7 @@ int main(int argc, char **argvp)
     {
 		std::memcpy(&sig[0], &test_sig[i * chunkSize], chunkSize * sizeof(float));
 		interp.interp(sig, out);
-		util::printReal(f, out.size(), out.get());
+		util::printReal(f, out.size(), out.data());
     }
 
     fclose(f);
@@ -99,7 +99,7 @@ int main(int argc, char **argvp)
     {
 		std::memcpy(&cin[0], &csig[i * chunkSize], chunkSize * sizeof(rm_math::complex_f));
 		interpc.interp(cin, cout);
-        util::printComplex(f, cout.size(), cout.get());
+        util::printComplex(f, cout.size(), cout.data());
     }
 
 	fclose(f);

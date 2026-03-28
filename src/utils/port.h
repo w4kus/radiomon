@@ -59,7 +59,7 @@ public:
             m_SampleBlockList.push_front(std::move(samples));
         }
         else
-            samples.reset();
+            samples.clear();
     }
 
     //! Read the block of data at the queue tail. 

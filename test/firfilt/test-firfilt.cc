@@ -149,7 +149,7 @@ int main(int argc, char **argvp)
     {
         auto seg = util::make_aligned_ptr<float>(64, &test_sig[i * 64]);
         testFir.filter(seg, out);
-        util::printReal(f, out.size(), out.get());
+        util::printReal(f, out.size(), out.data());
     }
 
     fclose(f);
@@ -167,7 +167,7 @@ int main(int argc, char **argvp)
     {
         auto seg = util::make_aligned_ptr<rm_math::complex_f>(64, &sigc[i * 64]);
         testFirc.filter(seg, outc);
-        util::printComplex(f, out.size(), outc.get());
+        util::printComplex(f, out.size(), outc.data());
     }
 
     fclose(f);

@@ -64,7 +64,7 @@ public:
     //! @param [in] freq    The initial frequency in radians / sample.
     //! @param [in] phase   The initial phase in radians. Default is zero.
     //! @param [in] gain    The **linear** gain. Default is one.
-    sine_source(T freq, T phase = 0.0f, T gain = 1.0f)
+    sine_source(const T freq, const T phase = 0.0f, const T gain = 1.0f)
     {
         base::m_Freq = freq;
         base::m_Phase = phase;
@@ -89,8 +89,8 @@ public:
                 base::m_Phase -= 2 * M_PI;
         }
 
-        rm_math::blk_cos(&v2[0], v1.get(), v1.size());
-        rm_math::vect_scaler_mult(&outBlock[0], v2.get(), base::m_Gain, outBlock.size());
+        rm_math::blk_cos(&v2[0], v1.data(), v1.size());
+        rm_math::vect_scaler_mult(&outBlock[0], v2.data(), base::m_Gain, outBlock.size());
     }
 };
 
@@ -107,7 +107,7 @@ public:
     //! @param [in] freq    The frequency in radians / sample.
     //! @param [in] phase   The initial phase in radians.
     //! @param [in] gain    The **linear** gain.
-    sine_source(float freq, float phase = 0.0f, float gain = 1.0f)
+    sine_source(const float freq, const float phase = 0.0f, const float gain = 1.0f)
     {
         m_Freq = freq;
         m_Phase = phase;
@@ -134,15 +134,15 @@ public:
         }
 
         // real part (I)
-        rm_math::blk_cos(&v1[0], phase.get(), v1.size());
-        rm_math::vect_scaler_mult(&v2[0], v1.get(), m_Gain, v2.size());
+        rm_math::blk_cos(&v1[0], phase.data(), v1.size());
+        rm_math::vect_scaler_mult(&v2[0], v1.data(), m_Gain, v2.size());
 
         for (size_t i=0;i < outBlock.size();i++)
             outBlock[i].real(v2[i]);
 
         // imaginary part (Q)
-        rm_math::blk_sin(&v1[0], phase.get(), v1.size());
-        rm_math::vect_scaler_mult(&v2[0], v1.get(), m_Gain, v2.size());
+        rm_math::blk_sin(&v1[0], phase.data(), v1.size());
+        rm_math::vect_scaler_mult(&v2[0], v1.data(), m_Gain, v2.size());
 
         for (size_t i=0;i < outBlock.size();i++)
             outBlock[i].imag(v1[i]);

@@ -15,10 +15,13 @@
 
 namespace dsp {
 
-/*! \brief Decimation using a FIR filter.
+/*! \brief Decimation using an FIR filter.
  *
- * This implements decimation using a FIR filter, supplied by
+ * This implements decimation using an FIR filter, supplied by
  * the user, and a sampling buffer. Only real taps are supported.
+ *
+ * \note Consider using the polyphase-baed \link rational-resampler block
+ * since it's a more efficient algorithm.
 */
 
 template<typename T, typename B>
@@ -54,7 +57,7 @@ public:
         if (m_SamplingBuffer.empty())
             m_SamplingBuffer = util::make_aligned_ptr<T>(inBlock.size() + m_M);
         else if ((inBlock.size() + m_SamplingCount) > m_SamplingBuffer.size())
-            m_SamplingBuffer = util::make_aligned_ptr<T>(inBlock.size() + m_SamplingCount + m_M, m_SamplingBuffer.get());
+            m_SamplingBuffer = util::make_aligned_ptr<T>(inBlock.size() + m_SamplingCount + m_M, m_SamplingBuffer.data());
 
         // Create the filter buffer and filter the current block
         auto filterBlock = util::make_aligned_ptr<T>(inBlock.size());
@@ -66,7 +69,7 @@ public:
         m_SamplingCount += inBlock.size();
 
         // Create the output buffer
-        outBlock = util::make_aligned_ptr<T>(m_SamplingCount / m_M);
+        util::init_aligned_ptr_on_resize<T>(outBlock, m_SamplingCount / m_M);
 
         // Sample at every M samples
         size_t cnt = 0;

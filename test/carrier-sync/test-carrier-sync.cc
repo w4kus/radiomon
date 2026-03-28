@@ -25,18 +25,18 @@ int main(int argc, char **argvp)
     cs.sync(in, out);
 
     FILE *f = fopen("test-carrier-sync-out.txt", "w");
-    util::printComplex(f, out.size(), out.get());
+    util::printComplex(f, out.size(), out.data());
     fclose(f);
 
     f = fopen("test-carrier-sync-in.txt", "w");
-    util::printComplex(f, in.size(), in.get());
+    util::printComplex(f, in.size(), in.data());
     fclose(f);
 
     auto err = util::aligned_ptr<float> { };
     cs.getErrorSig(err);
 
     f = fopen("test-carrier-sync-error.txt", "w");
-    util::printReal(f, err.size(), err.get());
+    util::printReal(f, err.size(), err.data());
     fclose(f);
 
     return 0;

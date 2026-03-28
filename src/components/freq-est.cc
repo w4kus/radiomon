@@ -20,7 +20,7 @@ float freq_est::estimate(const util::aligned_ptr<rm_math::complex_f> &in)
         v2[i] = m_Delay << in[i];
 
     // Do the math
-    rm_math::mult_conj(&v3[0], in.get(), v2.get(), in.size());
+    rm_math::mult_conj(&v3[0], in.data(), v2.data(), in.size());
 
     // Sum the result to average out the noise
     rm_math::complex_f sum = { 0.0f, 0.0f };
