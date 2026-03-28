@@ -19,17 +19,17 @@ namespace comps {
  * Following *GNU Radio*'s (GR) lead and with special thanks to Qasim Chaudhari's wonderful
  * e-book [Wireless Communications from the Ground Up - An SDR Perspective](https://wirelesspi.com/)
  * for decoding GR's intentions, one can simply choose the loop bandwidth to get a usable approximation
- * of the coefficients.
- * 
- * A good rule-of-them is to choose a bandwidth of 1% of the total bandwidth which, when
- * expressed in radians, would be **bw = 2*pi/100**. Chaudhari's findings dictate the following:
+ * of the coefficients. A good rule-of-them is to choose a bandwidth of 1% of the total bandwidth
+ * which, when expressed in radians, would be **bw = 2*pi/100**. Chaudhari's findings dictate
+ * the following:
  * 
  * * Kp = 4*bw
  * * Ki = Kp^2/4
  * 
  * In general, again using GR as a guide, you can vary this between **pi/100** and **2*pi/100**
  * and get reasonable results. There are many resources on the web and in communication texts 
- * about calculating PI coefficents but the above simple calculations should work in most situations.
+ * about calculating PI coefficents but the above simple calculations should work as a reasonable
+ * estimate in general cases.
 */
 
 class loopfilt
