@@ -14,8 +14,7 @@
 
 namespace util {
 
-/*! \file aligned-ptr.h
- * \brief Container for an aligned buffer which may be required depending
+/*! \brief Container for an aligned buffer which may be required depending
  * on the system on which the system is running and the math library being used.
  * It is both movable and copyable and has random access iterator support.
  *

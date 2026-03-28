@@ -16,9 +16,7 @@
 
 namespace dsp {
 
-/*! \file rational-resampler.h
- *
- * \brief Polyphase Rational Resampler
+/*! \brief Polyphase Rational Resampler
  *
  * Given a rational resampling factor **L/M**, where **L** is the interpolation factor and
  * **M** is the decimation factor, this block will resample a block of samples from the

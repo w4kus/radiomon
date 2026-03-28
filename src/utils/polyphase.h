@@ -11,9 +11,7 @@
 
 namespace util {
 
-/*! \file polyphase.h
- *
- * \brief Helper to Build Polyphase FIR Structures
+/*! \brief Helper to Build Polyphase FIR Structures
  *
  * @param [in] taps  A 2D *std::vector* containing the decomposed FIR coefficients to use.
  *
