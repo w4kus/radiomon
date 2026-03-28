@@ -13,4 +13,4 @@ subdir('firdecim')
 subdir('nco')
 subdir('freq-est')
 subdir('carrier-sync')
-
+subdir('rational-resampler')
