@@ -27,7 +27,7 @@ int main(int argc, char **argvp)
     // Input signal
     FILE *f = fopen("test-nco-input.txt", "w");
     sig.get(blk);
-    util::printComplex(f, blk.size(), blk.get());
+    util::printComplex(f, blk.size(), blk.data());
     fclose(f);
 
     nco.setFrequency(2 * M_PI / NUM_SAMPLES);
@@ -46,7 +46,7 @@ int main(int argc, char **argvp)
     }
 
     f = fopen("test-nco-output.txt", "w");
-    util::printComplex(f, NUM_SAMPLES, out.get());
+    util::printComplex(f, NUM_SAMPLES, out.data());
     fclose(f);
 
     return 0;
