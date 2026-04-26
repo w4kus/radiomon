@@ -9,7 +9,6 @@
 #include <memory>
 
 #include "block.h"
-#include "aligned-ptr.h"
 #include "poly-subfilter.h"
 #include "polyphase.h"
 #include "trace.h"
@@ -57,7 +56,7 @@ public:
     //! @param [in] gain    The gain which is multipled to each coefficient.
     rational_resampler(const uint16_t L, const uint16_t M,
                         const std::vector<std::vector<float>> &taps, const uint16_t gain = 1) :
-                        m_L { L }, m_M { M }, m_Mk { 0 }, m_DecimSum { 0 }
+                        block<B> { TYPE_RESAMPLER }, m_L { L }, m_M { M }, m_Mk { 0 }, m_DecimSum { 0 }
     {
         assert((L == taps.size()) || (M == taps.size()));
 
@@ -73,7 +72,7 @@ public:
     template<size_t R, size_t C>
     rational_resampler(const uint16_t L, const uint16_t M,
                         const std::array<std::array<float, C>, R> &taps,  const uint16_t gain = 1) :
-                        m_L { L }, m_M { M }, m_Mk { 0 }, m_DecimSum { 0 }
+                        block<B> { TYPE_RESAMPLER }, m_L { L }, m_M { M }, m_Mk { 0 }, m_DecimSum { 0 }
     {
         assert((L == R) || (M == R));
 
@@ -124,7 +123,7 @@ private:
         // Must be both - or both are one in which case the firfilt block is easier to use
         else
         {
-            assert(!((block<B>::m_SamplingRate * m_L) % m_M));
+            assert(!((block<B>::getSamplingRate() * m_L) % m_M));
             m_Mk = m_L;
             m_InterpDecimBuff = std::make_unique<T[]>(m_L);
             m_Handler = std::bind(&rational_resampler::interp_decim, this, std::placeholders::_1, std::placeholders::_2);
@@ -147,6 +146,9 @@ private:
             for (size_t j=0;j < m_L;j++)
                 outBlock[k++] = m_SubFilters[j].insert(inBlock[i]);
         }
+
+        // Resamplers must set the sampling rate on each block processing call
+        block<B>::m_SamplingRate *= m_L;
     }
 
     ////
@@ -172,6 +174,9 @@ private:
                 m_DecimSum = 0;
             }
         }
+
+        // Resamplers must set the sampling rate on each block processing call
+        block<B>::m_SamplingRate /= m_M;
     }
 
     ////
@@ -196,10 +201,13 @@ private:
                 m_Mk += m_M;
             }
         }
+
+        // Resamplers must set the sampling rate on each block processing call
+        block<B>::m_SamplingRate = block<B>::m_SamplingRate * m_L / m_M;
     }
 };
 
 using rational_resampler_ff = rational_resampler<float,dsp::func_ff>;
-using rational_resampler_cc = rational_resampler<std::complex<float>,dsp::func_cc>;
+using rational_resampler_cc = rational_resampler<rm_math::complex_f, dsp::func_cc>;
 
 }

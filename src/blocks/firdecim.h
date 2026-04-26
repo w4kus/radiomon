@@ -5,10 +5,7 @@
 #pragma once
 
 #include <memory>
-#include <complex>
 #include <type_traits>
-#include <aligned-ptr.h>
-#include <vector>
 
 #include "firfilt.h"
 #include "block.h"
@@ -35,8 +32,7 @@ public:
     //! Create an instance with a integer interpolation factor and FIR filter.
     //! @param [in] M       The integer decimation factor,
     //! @param [in] taps    The filter coefficients.
-    firdecim(const uint16_t M, const util::aligned_ptr<float> taps) :
-                m_M { M }, m_SamplingCount { 0 }
+    firdecim(const uint16_t M, const util::aligned_ptr<float> taps) : block<B> { TYPE_RESAMPLER }, m_M { M }
     {
         assert(M > 0);
 
@@ -47,7 +43,7 @@ public:
     //! Decimate a block of a signal.
     //! @param [in]     inBlock     The data to be decimated.
     //! @param [out]    outBlock    The decimated data which will be the size of *inBlock* / **M** or
-    //!                             the size of *inBlock* / **M** + 1. *outlBock* shall be empty.
+    //!                             the size of *inBlock* / **M** + 1.
     void decim(const util::aligned_ptr<T> &inBlock, util::aligned_ptr<T> &outBlock)
     {
         // If the sampling buffer is in an invalid state, validate it with the size of the
@@ -85,6 +81,9 @@ public:
         mod = m_SamplingCount % cnt;
         std::move(m_SamplingBuffer.begin() + cnt, m_SamplingBuffer.begin() + cnt + mod, m_SamplingBuffer.begin());
         m_SamplingCount -= cnt;
+
+        // Resamplers must set the sampling rate on each block processing call
+        block<B>::m_SamplingRate /= m_M;
     }
 
 private:
@@ -97,6 +96,6 @@ private:
 };
 
 using firdecim_ff = firdecim<float,dsp::func_ff>;
-using firdecim_cc = firdecim<std::complex<float>,dsp::func_cc>;
+using firdecim_cc = firdecim<rm_math::complex_f,dsp::func_cc>;
 
 }

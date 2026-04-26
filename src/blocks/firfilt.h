@@ -4,12 +4,7 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <vector>
-#include <complex>
 #include <algorithm>
-#include <cassert>
-#include "rm-math.h"
 
 #include "block.h"
 
@@ -31,7 +26,7 @@ class firfilter : public block<B>
 public:
     //! Create an instance for filtering.
     //! @param [in] taps    The array of coefficents.
-    firfilter(const util::aligned_ptr<float> &taps) : m_Taps { taps }
+    firfilter(const util::aligned_ptr<float> &taps) : block<B> { TYPE_OPERATOR }, m_Taps { taps }
     {
         block<B>::process = std::bind(&firfilter::filter, this, std::placeholders::_1, std::placeholders::_2);
         m_State = util::make_aligned_ptr<T>(m_Taps.size());
@@ -39,7 +34,7 @@ public:
 
     //! Filter a segment of a signal.
     //! @param [in]  inBlock     The data to be filtered.
-    //! @param [out] outBlock    The filtered data. *outBlock* shall be empty,
+    //! @param [out] outBlock    The filtered data.
     void filter(const util::aligned_ptr<T> &inBlock, util::aligned_ptr<T> &outBlock)
     {
         util::init_aligned_ptr<T>(outBlock, inBlock.size());
@@ -59,6 +54,6 @@ private:
 };
 
 using firfilter_ff = firfilter<float, dsp::func_ff>;
-using firfilter_cc = firfilter<std::complex<float>, dsp::func_cc>;
+using firfilter_cc = firfilter<rm_math::complex_f, dsp::func_cc>;
 
 }

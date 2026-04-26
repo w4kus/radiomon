@@ -9,7 +9,7 @@
 
 using namespace dsp;
 
-carrier_sync::carrier_sync(const float Kp, const float Ki, const size_t errorPortSize) :
+carrier_sync::carrier_sync(const float Kp, const float Ki, const size_t errorPortSize) : block<func_cc> { TYPE_OPERATOR },
                             m_LoopFilt { Kp, Ki },
                             m_Nco { M_PI / 16 },
                             m_Est {1.0f },
@@ -28,10 +28,10 @@ void carrier_sync::sync(const util::aligned_ptr<rm_math::complex_f> &inBlock, ut
 
     // Update the estimater scaling factor using the current sampling rate but only
     // if the sampling rate has changed (prevent unnecessary division).
-    if (m_CurrentSampleRate != m_SamplingRate)
+    if (m_CurrentSampleRate != getSamplingRate())
     {   
-        m_CurrentSampleRate = m_SamplingRate;
-        m_Est.setScale(2 * M_PI / (float)m_SamplingRate);
+        m_CurrentSampleRate = getSamplingRate();
+        m_Est.setScale(2 * M_PI / (float)getSamplingRate());
     }
 
     // Get the estimate and update the NCO

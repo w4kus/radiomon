@@ -8,7 +8,6 @@
 #include <complex>
 
 #include "block.h"
-#include "aligned-ptr.h"
 #include "firfilt.h"
 
 namespace dsp {
@@ -18,7 +17,7 @@ namespace dsp {
  * This implements interpolation using an FIR filter, supplied by
  * the user, and zero stuffing. Only real taps are supported.
  *
- * \note Consider using the polyphase-baed \link rational-resampler block
+ * \note Consider using the polyphase-based \link rational-resampler block
  * since it's a more efficient algorithm.
  */
 
@@ -35,7 +34,7 @@ public:
     //! @param [in] taps    The filter coefficients.
     //! @param [in] adjustGain  Adjust the coeffcients by *L*. Defaults to *true*.
     firinterp(const uint16_t L, const util::aligned_ptr<float> &taps, const bool adjustGain = true) :
-                m_L { L }
+                    block<B> { TYPE_RESAMPLER }, m_L { L }
     {
         assert(L > 0);
 
@@ -53,7 +52,6 @@ public:
     //! Interpolate a block of a signal.
     //! @param [in]     inBlock     The data to be interpolated.
     //! @param [out]    outBlock    The interpoldated data which will be the size of *inBlock* * **L**.
-    //!                             *outBlock* shall be empty.
     void interp(const util::aligned_ptr<T> &inBlock, util::aligned_ptr<T> &outBlock)
     {
         const size_t outBlockSize = inBlock.size() * m_L;
@@ -72,6 +70,9 @@ public:
         }
 
         m_LpFilter->filter(filterBlock, outBlock);
+
+        // Resamplers must set the sampling rate on each block processing call
+        block<B>::m_SamplingRate *= m_L;
     }
 
 private:
@@ -81,6 +82,6 @@ private:
 };
 
 using firinterp_ff = firinterp<float,dsp::func_ff>;
-using firinterp_cc = firinterp<std::complex<float>,dsp::func_cc>;
+using firinterp_cc = firinterp<rm_math::complex_f, dsp::func_cc>;
 
 }
