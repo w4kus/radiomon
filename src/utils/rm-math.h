@@ -27,6 +27,8 @@ constexpr bool is_std_complex_v = is_std_complex<std::complex<T>>::value;
 
 struct volk
 {
+    volk() = delete;
+
     using complex_f = std::complex<float>;
 
     // memory
@@ -120,6 +122,8 @@ struct volk
 // ARM Cortex-M (future)
 struct cmsis
 {
+    cmsis() = delete;
+
     template<typename T>
     static T* rm_malloc(size_t size)
     {
