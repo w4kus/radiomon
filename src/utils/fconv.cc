@@ -31,7 +31,7 @@ fconv::fconv(const float *h, const size_t n, const size_t m) :
     setupTaps();
 }
 
-fconv::fconv(const std::complex<float> *h, const size_t n, const size_t m) :
+fconv::fconv(const rm_math::complex_f *h, const size_t n, const size_t m) :
     m_FwdPlan(nullptr),
     m_RevPlan(nullptr),
     m_N(n),
@@ -100,9 +100,9 @@ std::vector<float> fconv::convolve(const float *b, bool stripEdges)
     return res;
 }
 
-std::vector<std::complex<float>> fconv::convolve(const std::complex<float> *b, bool stripEdges)
+std::vector<rm_math::complex_f> fconv::convolve(const rm_math::complex_f *b, bool stripEdges)
 {
-    std::vector<std::complex<float>> res;
+    std::vector<rm_math::complex_f> res;
 
     std::memset(m_Buff, 0, m_DftSize * sizeof(fftwf_complex));
 
@@ -119,7 +119,7 @@ std::vector<std::complex<float>> fconv::convolve(const std::complex<float> *b, b
 
     for (size_t i=start;i <= end;i++)
     {
-        std::complex<float> val(m_Buff[i][0] * m_A, m_Buff[i][1] * m_A);
+        rm_math::complex_f val(m_Buff[i][0] * m_A, m_Buff[i][1] * m_A);
         res.push_back(val);
     }
 
