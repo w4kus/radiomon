@@ -3,6 +3,8 @@
 // Licensed under the MIT License - see LICENSE file for details.
 
 #include <stdlib.h>
+#include <thread>
+#include <stdio.h>
 
 #include "chain.h"
 #include "timer.h"
@@ -15,6 +17,7 @@
 #include "callback.h"
 #include "signal-source.h"
 #include "rational-resampler.h"
+
 /*
 const float lp_blackman_1p5k_48k[91] =
 {
@@ -43,9 +46,9 @@ constexpr size_t sampleNum = Fs / F * 48;
 constexpr int M = 4;
 
 static FILE *f;
+
 void chainCallback(const util::aligned_ptr<float> &buff)
 {
-    // printf("Rcv %.1f %.1f %.1f\n", data[0], data[1], data[2]);
     util::printReal(f, buff.size(), buff.data());
 }
 
@@ -54,38 +57,27 @@ int main(int argc, char **argvp)
     util::chain theChain("TEST_CHAIN");
 
 #if 0
-    theChain.add(std::make_shared<dsp::endpoints::vector_source_ff>(std::vector<float>{ 1.0f, 2.0f, 3.0f }, 4800), "VECTOR_SOURCE");
-    theChain.add(std::make_shared<dsp::hilbert>(), "HILBERT");
-    theChain.add(std::make_shared<dsp::complex_float>(), "COMPLEX_FLOAT");
-    theChain.add(std::make_shared<dsp::endpoints::callback_ff>(chainCallback), "CALLBACK");
-#else
-    f = fopen("test-signal-source.txt", "w");
-
-    theChain.add(std::make_shared<dsp::endpoints::signal_source_ff>(sampleNum, F, Fs), "SIG_SOURCE");
-    theChain.add(std::make_shared<dsp::rational_resampler_ff>(1, M, lp_blackman_1p5k_48k_poly), "RESAMPLER");
-    theChain.add(std::make_shared<dsp::endpoints::callback_ff>(chainCallback), "CALLBACK");
+    theChain.add(std::make_unique<dsp::endpoints::vector_source_ff>(std::vector<float>{ 1.0f, 2.0f, 3.0f }, 4800), "VECTOR_SOURCE");
+    theChain.add(std::make_unique<dsp::hilbert>(), "HILBERT");
+    theChain.add(std::make_unique<dsp::complex_float>(), "COMPLEX_FLOAT");
+    theChain.add(std::make_unique<dsp::endpoints::callback_ff>(chainCallback), "CALLBACK");
 #endif
 
-    if (!theChain.check())
+    f = fopen("test-chain.txt", "w");
+
+    theChain.add(std::make_unique<dsp::endpoints::signal_source_ff>(sampleNum, F, Fs), "SIG_SOURCE");
+    theChain.add(std::make_unique<dsp::rational_resampler_ff>(1, M, lp_blackman_1p5k_48k_poly), "RESAMPLER");
+    theChain.add(std::make_unique<dsp::endpoints::callback_ff>(chainCallback), "CALLBACK");
+
+    if (!theChain.setup())
     {
-        printf("Chain check failed\n");
+        printf("Chain setup failed\n");
         return -1;
     }
 
-#if 0
-    auto tmr = util::timer::StartTimer();
-
-    for (int i=0;i < 100000;i++)
-    {
-        printf("iter %d\n", i);
-        theChain.iterate();
-    }
-
-    printf("-- %u\n", util::timer::EndTimer(tmr));
-#else
     theChain.iterate();
+
     fclose(f);
-#endif
 
     return 0;
 }
