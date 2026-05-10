@@ -12,6 +12,8 @@
 
 namespace dsp {
 
+//! \cond
+//////////////////////////
 template<typename>
 struct is_block_func : public std::false_type {};
 
@@ -34,6 +36,9 @@ struct is_block_func<void(const util::aligned_ptr<rm_math::complex_f>&, util::al
 template<typename T>
 constexpr bool is_block_func_v = is_block_func<T>::value;
 
+//! \endcond
+//////////////////////////
+
 using func_ff = void(const util::aligned_ptr<float>&, util::aligned_ptr<float>&);
 using func_fc = void(const util::aligned_ptr<float>&, util::aligned_ptr<rm_math::complex_f>&);
 using func_cc = void(const util::aligned_ptr<rm_math::complex_f>&, util::aligned_ptr<rm_math::complex_f>&);
@@ -50,19 +55,39 @@ enum block_type
     TYPE_RESAMPLER  // An operator type block which resamples the signal.
 };
 
+enum bidir_mode
+{
+    BIDIR_NONE,
+    BIDIR_SOURCE,
+    BIDIR_SINK
+};
+
+/*! \brief Base Template for All DSP Blocks */
+
 template<typename T>
 class block
 {
 public:
-    auto        getProcesser() { return process; }
 
+    //! Get the block's processing method.
+    auto        getProcesser() const { return process; }
+
+    //! Set the current sampling rate for the block to use.
     void        setSamplingRate(uint32_t rate) { m_SamplingRate = rate; }
-    block_type  getType() { return m_Type; }
 
-    rate_t      getSamplingRate() { return m_SamplingRate; }
+    //! Get the type of block this represents.
+    block_type  getType() const { return m_Type; }
+
+    //! Get the block's sampling rate. Resampling blocks change the sampling rate.
+    rate_t      getSamplingRate() const { return m_SamplingRate; }
+
+    //! Set the mode for a bidirectional block.
+    void        setBidirMode(bidir_mode mode) { m_BidirMode = mode; }
 
 protected:
-    block(block_type type) : m_SamplingRate { 0 }, m_Type { type }
+    //! \cond
+
+    block(block_type type) : m_SamplingRate { 0 },  m_BidirMode { BIDIR_NONE }, m_Type { type }
     { }
 
     block() = delete;
@@ -77,8 +102,12 @@ protected:
 
     rate_t m_SamplingRate;
 
+    bidir_mode m_BidirMode;
+
 private:
     block_type  m_Type;
+
+    //! \endcond
 };
 
 }
