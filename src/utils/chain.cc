@@ -11,7 +11,7 @@ void chain::add(dsp::block<dsp::func_ff> &block, const char *name)
     m_Chain.push_back(link { ff, &block, name, block.getType() });
 }
 
-void chain::add(const std::shared_ptr<dsp::block<dsp::func_ff>> block, const char *name)
+void chain::add(std::unique_ptr<dsp::block<dsp::func_ff>> &&block, const char *name)
 {
     m_Chain.push_back(link { ff, block.get(), name, block->getType() });
     m_FloatBlocks.push_back(std::move(block));
@@ -22,7 +22,7 @@ void chain::add(dsp::block<dsp::func_fc> &block, const char *name)
     m_Chain.push_back(link { fc, &block, name, block.getType() });
 }
 
-void chain::add(const std::shared_ptr<dsp::block<dsp::func_fc>> block, const char *name)
+void chain::add(std::unique_ptr<dsp::block<dsp::func_fc>> &&block, const char *name)
 {
     m_Chain.push_back(link { fc, block.get(), name, block->getType() });
     m_FloatCmplxBlocks.push_back(std::move(block));
@@ -33,7 +33,7 @@ void chain::add(dsp::block<dsp::func_cf> &block, const char *name)
     m_Chain.push_back(link { cf, &block, name, block.getType() });
 }
 
-void chain::add(const std::shared_ptr<dsp::block<dsp::func_cf>> block, const char *name)
+void chain::add(std::unique_ptr<dsp::block<dsp::func_cf>> &&block, const char *name)
 {
     m_Chain.push_back(link { cf, block.get(), name, block->getType() });
     m_CmplxFloatBlocks.push_back(std::move(block));
@@ -44,13 +44,13 @@ void chain::add(dsp::block<dsp::func_cc> &block, const char *name)
     m_Chain.push_back(link { cc, &block, name, block.getType() });
 }
 
-void chain::add(const std::shared_ptr<dsp::block<dsp::func_cc>> block, const char *name)
+void chain::add(std::unique_ptr<dsp::block<dsp::func_cc>> &&block, const char *name)
 {
     m_Chain.push_back(link { cc, block.get(), name, block->getType() });
     m_CmplxBlocks.push_back(std::move(block));
 }
 
-bool chain::check(void)
+bool chain::setup(void)
 {
     assert(m_Chain.size() > 1);
 
@@ -93,12 +93,22 @@ bool chain::check(void)
         m_Trace.print(ID, "First and last links are endpoints -- GOOD\n");
     }
 
+    if (m_Chain[0].type == dsp::TYPE_BIDIR)
+        m_Chain[0].bimode = dsp::BIDIR_SOURCE;
+
+    if (m_Chain[m_Chain.size() - 1].type == dsp::TYPE_BIDIR)
+        m_Chain[m_Chain.size() - 1].bimode = dsp::BIDIR_SINK;
+
+    m_IsChecked = true;
+
     m_Trace.print(ID, "%s is all good\n", m_Name);
     return true;
 }
 
 void chain::iterate()
 {
+    assert(m_IsChecked);
+
     dsp::rate_t rate = 0;
 
     // During an iteration we could either copy or move the buffers. At first glance, it would seem
@@ -156,4 +166,6 @@ void chain::clear()
     m_fBuff[OUT_IDX].clear();
     m_cBuff[IN_IDX].clear();
     m_cBuff[OUT_IDX].clear();
+
+    m_IsChecked = false;
 }
