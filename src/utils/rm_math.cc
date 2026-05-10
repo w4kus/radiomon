@@ -6,11 +6,15 @@
 
 using namespace util;
 
+//! \cond
+
 typedef struct
 {
     float product;
     float inverse;
 }round_tab_t;
+
+//! \endcond
 
 const round_tab_t round_tab[] =
 {

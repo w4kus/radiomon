@@ -11,6 +11,8 @@
 
 namespace util {
 
+//! \cond
+
 template<bool enable = false>
 class trace
 {
@@ -67,4 +69,7 @@ private:
 
     FILE *m_Fn;
 };
+
+//! \endcond
+
 }

@@ -49,7 +49,7 @@ public:
     }
 
     //! Generate a block of samples.
-    //! @param [in]  inBlock    Ignored. This will be removed in a future commit.
+    //! @param [in]  inBlock    Ignored.
     //! @param [out] outBlock   The block of generated samples.
     void generate(const util::aligned_ptr<T> &inBlock, util::aligned_ptr<T> &outBlock)
     {

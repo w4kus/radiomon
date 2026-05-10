@@ -38,7 +38,7 @@ public:
 
     //! Invoke the callback method.
     //! @param [in]  inBlock     The data to send to the method
-    //! @param [out] outBlock    Ignored. This will be removed in a future commit.
+    //! @param [out] outBlock    Ignored.
     void cb_wrapper(const util::aligned_ptr<T> &inBlock, util::aligned_ptr<T> &outBlock)
     {
         m_CB(inBlock);

@@ -16,6 +16,8 @@
 // Volk specializations
 namespace util {
 
+//! \cond
+
 template<typename T>
 struct is_std_complex : std::false_type { };
 
@@ -24,6 +26,8 @@ struct is_std_complex<std::complex<T>> : std::true_type { };
 
 template<typename T>
 constexpr bool is_std_complex_v = is_std_complex<std::complex<T>>::value;
+
+//! \endcond
 
 struct volk
 {
