@@ -36,7 +36,7 @@ namespace dsp {
  * *test-rational-resampler.cc* for examples on how to do this.
  *
  * If **L = 1** and **M > 1**, then this block reduces to decimation only and **M** is the number of
- * rows in the polyphase structure. Similarly, if **M > 1** and **L = 1**, then this reduces
+ * rows in the polyphase structure. Similarly, if **L > 1** and **M == 1**, then this reduces
  * to interpolation only and **L** equals the number of rows in the polyphase structure.
  *
  */
