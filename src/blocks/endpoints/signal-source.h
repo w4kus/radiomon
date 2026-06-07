@@ -5,6 +5,7 @@
 #pragma once
 
 #include <type_traits>
+#include <mutex>
 
 #include "block.h"
 #include "sine-source.h"
@@ -51,7 +52,33 @@ public:
         block<B>::m_SamplingRate = m_SamplingRate;
 
         util::init_aligned_ptr_on_resize<T>(outBlock, m_Size);
+
+        std::lock_guard<std::mutex> lck(m_Mtx);
         m_Sine.get(outBlock);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+    //! External API
+    float gain() const
+    {
+        return m_Sine.gain();
+    }
+
+    void setGain(T gain)
+    {
+        std::lock_guard<std::mutex> lck(m_Mtx);
+        m_Sine.setGain(gain);
+    }
+
+    rate_t frequency() const
+    {
+        return static_cast<rate_t>(rm_math::rps_to_hz(m_Sine.frequency(), m_SamplingRate));
+    }
+
+    void setFrequency(rate_t freq)
+    {
+        std::lock_guard<std::mutex> lck(m_Mtx);
+        m_Sine.setFrequency(rm_math::hz_to_rps(freq, m_SamplingRate));
     }
 
 private:
@@ -59,6 +86,8 @@ private:
     util::sine_source<T> m_Sine;
     size_t m_Size;
     rate_t m_SamplingRate;
+
+    std::mutex m_Mtx;
 };
 
 using signal_source_ff = signal_source<float, dsp::func_ff>;
