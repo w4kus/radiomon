@@ -51,7 +51,7 @@ public:
     {
         if (m_MaxSize)
         {
-            std::unique_lock<std::mutex> lck(m_Mtx);
+            std::lock_guard<std::mutex> lck(m_Mtx);
 
             if (m_SampleBlockList.size() == m_MaxSize)
                 m_SampleBlockList.pop_back();
@@ -68,7 +68,7 @@ public:
     {
         if (m_SampleBlockList.size())
         {
-           std::unique_lock<std::mutex> lck(m_Mtx);
+           std::lock_guard<std::mutex> lck(m_Mtx);
 
            samples = std::move(m_SampleBlockList.back());
            m_SampleBlockList.pop_back();
