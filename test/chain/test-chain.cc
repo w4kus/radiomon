@@ -14,7 +14,7 @@
 #include "vector-source.h"
 #include "hilbert.h"
 #include "complex-float.h"
-#include "callback.h"
+#include "callback-sink.h"
 #include "signal-source.h"
 #include "rational-resampler.h"
 
