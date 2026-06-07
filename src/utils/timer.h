@@ -10,11 +10,11 @@
 namespace util {
 
 // Time routines from the standard C++ library
-struct cpp
+struct cpp_timer
 {
     using timer_t = std::chrono::steady_clock::time_point;
 
-    cpp() = delete;
+    cpp_timer() = delete;
 
     // Get the current time
     static timer_t StartTimer()
@@ -52,5 +52,5 @@ struct cpp
     }
 };
 
-using timer = cpp;
+using timer = cpp_timer;
 }
