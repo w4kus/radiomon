@@ -120,6 +120,9 @@ struct volk
 
     // Hz to radians per sample
     static float hz_to_rps(uint32_t hz, uint32_t Fs) { return 2*M_PI*hz/Fs; }
+
+    // radians per sample to Hz
+    static float rps_to_hz(float rps, uint32_t Fs) { return rps*Fs/(2*M_PI); }
 };
 
 //////////////////////////////////////////////////////////////////////////////
