@@ -6,7 +6,8 @@ test_sources = [  meson.project_source_root() + '/src/utils/cmdline.cc',
                             meson.project_source_root() + '/src/utils/rm_math.cc',
                             meson.project_source_root() + '/src/utils/chain.cc',
                             meson.project_source_root() + '/src/blocks/complex-float.cc',
-                            meson.project_source_root() + '/src/blocks/hilbert.cc' ]
+                            meson.project_source_root() + '/src/blocks/hilbert.cc',
+                            meson.project_source_root() + '/src/utils/menu.cc' ]
 
 subdir('conv')
 subdir('firfilt')
@@ -16,6 +17,6 @@ subdir('nco')
 subdir('freq-est')
 subdir('carrier-sync')
 subdir('rational-resampler')
-# subdir('audio-endpoint')
+subdir('audio-endpoint')
 subdir('chain')
 subdir('ring-buffer')
