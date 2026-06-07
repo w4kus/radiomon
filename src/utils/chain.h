@@ -40,7 +40,7 @@ namespace util {
  *   runtime modifications to the block if desired and the block supports it.
  * * **Pointers** where a *std::unique_ptr* containing the block is passed in. This is the
  *   *add-and-forget* method which gives ownership of the pointer to the chain instance. It will be
- *   destroyed when the chain is destropyed.
+ *   destroyed when the chain is destroyed.
 */
 
 class chain
@@ -48,14 +48,14 @@ class chain
 public:
 
     //! Create an instance of a chain. The name is set to a default value.
-    chain() : m_IsChecked { false }
+    chain() : m_IsChecked { false }, m_FIdx { 0 }, m_CIdx { 0 }
     {
         m_Name = "THE_CHAIN";
     }
 
     //! Create an instance of a chain.
     //! @param [in] name  The name of the chain. This is for the benefit of the developer.
-    chain(const char *name) : m_Name { name }, m_IsChecked { false }
+    chain(const char *name) : m_Name { name }, m_IsChecked { false }, m_FIdx { 0 }, m_CIdx { 0 }
     {
     }
 
@@ -188,9 +188,7 @@ protected:
     std::vector<std::unique_ptr<dsp::block<dsp::func_cf>>> m_CmplxFloatBlocks;
     std::vector<std::unique_ptr<dsp::block<dsp::func_cc>>> m_CmplxBlocks;
 
-    static constexpr uint8_t IN_IDX         = 0;
     static constexpr uint8_t IN_MASK        = 1;
-    static constexpr uint8_t OUT_IDX        = 1;
     static constexpr uint8_t OUT_MASK       = 2;
 
     //! \endcond
@@ -205,7 +203,7 @@ protected:
     template<typename T, typename U, typename V>
     void handleLink(const link &lnk, dsp::rate_t &rate, util::aligned_ptr<U> &in, util::aligned_ptr<V> &out)
     {
-        auto blk = reinterpret_cast<dsp::block<T> *>(lnk.block);
+        auto blk = static_cast<dsp::block<T> *>(lnk.block);
 
         // Set the sampling rate of the current link to what was set by a previous link.
         blk->setSamplingRate(rate);
@@ -231,6 +229,8 @@ protected:
 
     const char *m_Name;
     bool m_IsChecked;
+    uint8_t m_FIdx;
+    uint8_t m_CIdx;
 
     static constexpr char const *ID = "CHAIN";
 

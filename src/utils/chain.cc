@@ -111,10 +111,12 @@ void chain::iterate()
 
     dsp::rate_t rate = 0;
 
-    // During an iteration we could either copy or move the buffers. At first glance, it would seem
-    // moving the buffers would be more efficient but by moving, blocks end up having to reallocate the
-    // buffers which were moved. This malloc overhead adds up over time. For a 10000 iteration test, I
-    // measured a savings of ~300ms by copying vs moving.
+    util::aligned_ptr<float> *pFloatIn = nullptr;
+    util::aligned_ptr<float> *pFloatOut = nullptr;
+
+    util::aligned_ptr<rm_math::complex_f> *pCmplxIn = nullptr;
+    util::aligned_ptr<rm_math::complex_f> *pCmplxOut = nullptr;
+
     for (size_t i=0; i < m_Chain.size();i++)
     {
         switch(m_Chain[i].iface)
@@ -122,29 +124,35 @@ void chain::iterate()
             case ff:
                 m_LinkTrace.print(ID, "F -> F\n");
 
-                m_fBuff[IN_IDX] = m_fBuff[OUT_IDX];
-                handleLink<dsp::func_ff, float, float>(m_Chain[i], rate, m_fBuff[IN_IDX], m_fBuff[OUT_IDX]);
+                pFloatIn = &m_fBuff[m_FIdx];
+                m_FIdx = (m_FIdx + 1) & 1;
+                pFloatOut = &m_fBuff[m_FIdx];
+                handleLink<dsp::func_ff, float, float>(m_Chain[i], rate, *pFloatIn, *pFloatOut);
                 break;
 
             case fc:
                 m_LinkTrace.print(ID, "F -> C\n");
 
-                m_fBuff[IN_IDX] = m_fBuff[OUT_IDX];
-                handleLink<dsp::func_fc, float, rm_math::complex_f>(m_Chain[i], rate, m_fBuff[IN_IDX], m_cBuff[OUT_IDX]);
+                pFloatIn = &m_fBuff[m_FIdx];
+                pCmplxOut = &m_cBuff[m_CIdx];
+                handleLink<dsp::func_fc, float, rm_math::complex_f>(m_Chain[i], rate, *pFloatIn, *pCmplxOut);
                 break;
 
             case cf:
                 m_LinkTrace.print(ID, "C -> F\n");
 
-                m_cBuff[IN_IDX] = m_cBuff[OUT_IDX];
-                handleLink<dsp::func_cf, rm_math::complex_f, float>(m_Chain[i], rate, m_cBuff[IN_IDX], m_fBuff[OUT_IDX]);
+                pCmplxIn = &m_cBuff[m_CIdx];
+                pFloatOut = &m_fBuff[m_FIdx];
+                handleLink<dsp::func_cf, rm_math::complex_f, float>(m_Chain[i], rate, *pCmplxIn, *pFloatOut);
                 break;
 
             case cc:
                 m_LinkTrace.print(ID, "C -> C\n");
 
-                m_cBuff[IN_IDX] = m_cBuff[OUT_IDX];
-                handleLink<dsp::func_cc, rm_math::complex_f, rm_math::complex_f>(m_Chain[i], rate, m_cBuff[IN_IDX], m_cBuff[OUT_IDX]);
+                pCmplxIn = &m_cBuff[m_CIdx];
+                m_CIdx = (m_CIdx + 1) & 1;
+                pCmplxOut = &m_cBuff[m_CIdx];
+                handleLink<dsp::func_cc, rm_math::complex_f, rm_math::complex_f>(m_Chain[i], rate, *pCmplxIn, *pCmplxOut);
                 break;
 
             default:
@@ -162,10 +170,10 @@ void chain::clear()
     m_CmplxFloatBlocks.clear();
     m_CmplxBlocks.clear();
 
-    m_fBuff[IN_IDX].clear();
-    m_fBuff[OUT_IDX].clear();
-    m_cBuff[IN_IDX].clear();
-    m_cBuff[OUT_IDX].clear();
+    m_fBuff[0].clear();
+    m_fBuff[1].clear();
+    m_cBuff[0].clear();
+    m_cBuff[1].clear();
 
     m_IsChecked = false;
 }
