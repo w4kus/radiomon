@@ -18,7 +18,7 @@ namespace dsp { namespace endpoints {
  */
 
 template<typename T, typename B>
-class callback : public block<B>
+class callback_sink : public block<B>
 {
     static_assert((std::is_floating_point<T>::value == std::true_type()) || util::is_std_complex_v<T>);
     static_assert(is_block_func_v<B>);
@@ -30,10 +30,10 @@ public:
 
     //! Create an instance.
     //! @param [in] cb  The method to invoke when a chain iteration is complete.
-    callback(user_cb cb) : block<B> { TYPE_SINK }
+    callback_sink(user_cb cb) : block<B> { TYPE_SINK }
     {
         m_CB = cb;
-        block<B>::process = std::bind(&callback::cb_wrapper, this, std::placeholders::_1, std::placeholders::_2);
+        block<B>::process = std::bind(&callback_sink::cb_wrapper, this, std::placeholders::_1, std::placeholders::_2);
     }
 
     //! Invoke the callback method.
@@ -50,7 +50,7 @@ private:
 
 };
 
-using callback_ff = callback<float, func_ff>;
-using callback_cc = callback<rm_math::complex_f, func_cc>;
+using callback_ff = callback_sink<float, func_ff>;
+using callback_cc = callback_sink<rm_math::complex_f, func_cc>;
 
 }}
