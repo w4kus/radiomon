@@ -6,6 +6,8 @@
 
 #include <memory>
 #include <complex>
+#include <vector>
+#include <array>
 
 #include "block.h"
 #include "firfilt.h"
@@ -47,6 +49,47 @@ public:
         }
 
         m_LpFilter = std::make_unique<firfilter<T, B>>(taps);
+    }
+
+    //! Create an instance with a integer interpolation factor and FIR filter.
+    //! @param [in] L       The integer interpolation factor
+    //! @param [in] taps    The filter coefficients.
+    //! @param [in] adjustGain  Adjust the coeffcients by *L*. Defaults to *true*.
+    firinterp(const uint16_t L, std::vector<float> &taps, const bool adjustGain = true) :
+                    block<B> { TYPE_RESAMPLER }, m_L { L }
+    {
+        assert(L > 0);
+
+        block<B>::process = std::bind(&firinterp::interp, this, std::placeholders::_1, std::placeholders::_2);
+
+        if (adjustGain)
+        {
+            for (auto it = taps.begin(); it != taps.end();++it)
+                *it *= L;
+        }
+
+        m_LpFilter = std::make_unique<firfilter<T, B>>(taps.data());
+    }
+
+    //! Create an instance with a integer interpolation factor and FIR filter.
+    //! @param [in] L       The integer interpolation factor
+    //! @param [in] taps    The filter coefficients.
+    //! @param [in] adjustGain  Adjust the coeffcients by *L*. Defaults to *true*.
+    template<size_t S>
+    firinterp(const uint16_t L, const std::array<float, S> &taps, const bool adjustGain = true) :
+                    block<B> { TYPE_RESAMPLER }, m_L { L }
+    {
+        assert(L > 0);
+
+        block<B>::process = std::bind(&firinterp::interp, this, std::placeholders::_1, std::placeholders::_2);
+
+        if (adjustGain)
+        {
+            for (auto it = taps.begin(); it != taps.end();++it)
+                *it *= L;
+        }
+
+        m_LpFilter = std::make_unique<firfilter<T, B>>(taps.data());
     }
 
     //! Interpolate a block of a signal.

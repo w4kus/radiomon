@@ -5,6 +5,8 @@
 #pragma once
 
 #include <algorithm>
+#include <vector>
+#include <array>
 
 #include "block.h"
 
@@ -25,11 +27,30 @@ class firfilter : public block<B>
 
 public:
     //! Create an instance for filtering.
-    //! @param [in] taps    The array of coefficents.
+    //! @param [in] taps    An aligned_ptr of coefficents.
     firfilter(const util::aligned_ptr<float> &taps) : block<B> { TYPE_OPERATOR }, m_Taps { taps }
     {
         block<B>::process = std::bind(&firfilter::filter, this, std::placeholders::_1, std::placeholders::_2);
-        m_State = util::make_aligned_ptr<T>(m_Taps.size());
+        util::init_aligned_ptr<T>(m_State, m_Taps.size());
+    }
+
+    //! Create an instance for filtering.
+    //! @param [in] taps    A vector of coefficents.
+    firfilter(const std::vector<float> &taps) : block<B> { TYPE_OPERATOR }
+    {
+        block<B>::process = std::bind(&firfilter::filter, this, std::placeholders::_1, std::placeholders::_2);
+        util::init_aligned_ptr<float>(m_Taps, taps.size(), taps.data());
+        util::init_aligned_ptr<T>(m_Taps, taps.size());
+    }
+
+    //! Create an instance for filtering.
+    //! @param [in] taps    An array of coefficents. 
+    template<size_t S>
+    firfilter(const std::array<float, S> &taps) : block<B> { TYPE_OPERATOR }
+    {
+        block<B>::process = std::bind(&firfilter::filter, this, std::placeholders::_1, std::placeholders::_2);
+        util::init_aligned_ptr<float>(m_Taps, taps.size(), taps.data());
+        util::init_aligned_ptr<T>(m_Taps, taps.size());
     }
 
     //! Filter a segment of a signal.
@@ -37,7 +58,7 @@ public:
     //! @param [out] outBlock    The filtered data.
     void filter(const util::aligned_ptr<T> &inBlock, util::aligned_ptr<T> &outBlock)
     {
-        util::init_aligned_ptr<T>(outBlock, inBlock.size());
+        util::init_aligned_ptr_on_resize<T>(outBlock, inBlock.size());
 
         for (size_t i=0;i < inBlock.size();i++)
         {

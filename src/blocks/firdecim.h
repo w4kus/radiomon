@@ -6,6 +6,8 @@
 
 #include <memory>
 #include <type_traits>
+#include <vector>
+#include <array>
 
 #include "firfilt.h"
 #include "block.h"
@@ -32,12 +34,35 @@ public:
     //! Create an instance with a integer interpolation factor and FIR filter.
     //! @param [in] M       The integer decimation factor,
     //! @param [in] taps    The filter coefficients.
-    firdecim(const uint16_t M, const util::aligned_ptr<float> taps) : block<B> { TYPE_RESAMPLER }, m_M { M }
+    firdecim(const uint16_t M, const util::aligned_ptr<float> &taps) : block<B> { TYPE_RESAMPLER }, m_M { M }
     {
         assert(M > 0);
 
         block<B>::process = std::bind(&firdecim::decim, this, std::placeholders::_1, std::placeholders::_2);
         m_LpFilter = std::make_unique<firfilter<T, B>>(taps);
+    }
+
+    //! Create an instance with a integer interpolation factor and FIR filter.
+    //! @param [in] M       The integer decimation factor,
+    //! @param [in] taps    The filter coefficients.
+    firdecim(const uint16_t M, const std::vector<float> &taps) : block<B> { TYPE_RESAMPLER }, m_M { M }
+    {
+        assert(M > 0);
+
+        block<B>::process = std::bind(&firdecim::decim, this, std::placeholders::_1, std::placeholders::_2);
+        m_LpFilter = std::make_unique<firfilter<T, B>>(taps.data());
+    }
+
+    //! Create an instance with a integer interpolation factor and FIR filter.
+    //! @param [in] M       The integer decimation factor,
+    //! @param [in] taps    The filter coefficients.
+    template<size_t S>
+    firdecim(const uint16_t M, const std::array<float, S> &taps) : block<B> { TYPE_RESAMPLER }, m_M { M }
+    {
+        assert(M > 0);
+
+        block<B>::process = std::bind(&firdecim::decim, this, std::placeholders::_1, std::placeholders::_2);
+        m_LpFilter = std::make_unique<firfilter<T, B>>(taps).data();
     }
 
     //! Decimate a block of a signal.
