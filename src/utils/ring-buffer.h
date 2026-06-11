@@ -51,12 +51,12 @@ public:
     {
         assert((size > 0) && !(size & (size - 1)));
         m_DynamicBuff = std::make_unique<T[]>(m_Capacity);
-        m_ReadFunc = std::bind(&ring_buffer::dynamicRead, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-        m_WriteFunc = std::bind(&ring_buffer::dynamicWrite, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        m_ReadFunc = std::bind(&ring_buffer::dynamicRead, this, std::placeholders::_1, std::placeholders::_2);
+        m_WriteFunc = std::bind(&ring_buffer::dynamicWrite, this, std::placeholders::_1, std::placeholders::_2);
     }
 
     //! Create an instance which uses a user supplied buffer. Primarily for statically declared buffers.
-    //! @param [in] buff        Caller suplied buffer
+    //! @param [in] buff        Caller supplied buffer
     //! @param [in] size        The number of elements the buffer will hold where each element is sizeof(T).
     //! @param [in] yieldTime   Time in microseconds to yield while waiting until the amount meets the transfer criteria.
     //! \note  It is the responsibility of the caller to ensure the buffer size is mod-2.
@@ -64,7 +64,7 @@ public:
                 m_Capacity { size },
                 m_Mask { m_Capacity - 1 },
                 m_YieldTime { yieldTime },
-                m_StaticBuff { (T *)buff },
+                m_StaticBuff { buff },
                 m_WriteIdx { 0 },
                 m_ReadIdx { 0 },
                 m_Abort { 0 },
@@ -72,8 +72,8 @@ public:
                 m_WaitForAmtCount { 0 }
     {
         assert((size > 0) && !(size & (size - 1)));
-        m_ReadFunc = std::bind(&ring_buffer::staticRead, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-        m_WriteFunc = std::bind(&ring_buffer::staticWrite, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        m_ReadFunc = std::bind(&ring_buffer::staticRead, this, std::placeholders::_1, std::placeholders::_2);
+        m_WriteFunc = std::bind(&ring_buffer::staticWrite, this, std::placeholders::_1, std::placeholders::_2);
     }
 
     ring_buffer() = delete;
@@ -91,9 +91,9 @@ public:
     {
         if (m_Abort) return;
 
-        std::unique_lock<std::mutex> lck(m_Mtx);
-
-        m_WriteFunc(buff, sz, lck);
+        m_Mtx.lock();
+        m_WriteFunc(buff, sz);
+        m_Mtx.unlock();
     }
 
     //! Read data from the ring buffer. This will block until the requested amount is read.
@@ -103,16 +103,16 @@ public:
     {
         if (m_Abort) return;
 
-        std::unique_lock<std::mutex> lck(m_Mtx);
-
-        m_ReadFunc(buff, sz, lck);
+        m_Mtx.lock();
+        m_ReadFunc(buff, sz);
+        m_Mtx.unlock();
     }
 
     //! Get the current diagnostic values.
     //! @param [out] d  Reference to a diagnotic structure.
     void diagnostics(diag &d)
     {
-        std::unique_lock<std::mutex> lck(m_Mtx);
+        std::lock_guard<std::mutex> lck(m_Mtx);
         d.fullCount = m_WaitForNotFullCount;
         d.emptyCount = m_WaitForAmtCount;
     }
@@ -121,7 +121,7 @@ public:
     //! @return The number of elements in the buffer.
     uint32_t amount()
     {
-        std::unique_lock<std::mutex> lck(m_Mtx);
+        std::lock_guard<std::mutex> lck(m_Mtx);
         return getAmount();
     }
 
@@ -137,7 +137,7 @@ public:
     //!                   Passing in zero in will have of effect.
     void abort(int code = -1)
     {
-        std::unique_lock<std::mutex> lck(m_Mtx);
+        std::lock_guard<std::mutex> lck(m_Mtx);
         m_Abort = code;
     }
 
@@ -145,14 +145,14 @@ public:
     //! @return The abort code.
     int abortcode()
     {
-        std::unique_lock<std::mutex> lck(m_Mtx);
+        std::lock_guard<std::mutex> lck(m_Mtx);
         return m_Abort;
     }
 
 private:
 
-    using write_func = void(const T *buff, const size_t sz, std::unique_lock<std::mutex> &lck);
-    using read_func  = void(T *buff, const size_t sz, std::unique_lock<std::mutex> &lck);
+    using write_func = void(const T *buff, const size_t sz);
+    using read_func  = void(T *buff, const size_t sz);
 
     std::function<write_func> m_WriteFunc;
     std::function<read_func>  m_ReadFunc;
@@ -162,7 +162,7 @@ private:
     uint32_t    m_YieldTime;
 
     std::unique_ptr<T[]>    m_DynamicBuff;
-    T*                      m_StaticBuff;
+    const T*                m_StaticBuff;
 
     std::mutex m_Mtx;
 
@@ -174,11 +174,11 @@ private:
     uint32_t m_WaitForNotFullCount;
     uint32_t m_WaitForAmtCount;
 
-    void dynamicWrite(const T *buff, const size_t sz, std::unique_lock<std::mutex> &lck)
+    void dynamicWrite(const T *buff, const size_t sz)
     {
         for (size_t i=0;i < sz;i++)
         {
-            waitNotFull(lck);
+            waitNotFull();
             if (m_Abort) return;
 
             m_DynamicBuff[m_WriteIdx++] = buff[i];
@@ -186,11 +186,11 @@ private:
         }
     }
 
-    void staticWrite(const T *buff, const size_t sz, std::unique_lock<std::mutex> &lck)
+    void staticWrite(const T *buff, const size_t sz)
     {
         for (size_t i=0;i < sz;i++)
         {
-            waitNotFull(lck);
+            waitNotFull();
             if (m_Abort) return;
 
             m_StaticBuff[m_WriteIdx++] = buff[i];
@@ -198,9 +198,9 @@ private:
         }
     }
 
-    void dynamicRead(T *buff, const size_t sz, std::unique_lock<std::mutex> &lck)
+    void dynamicRead(T *buff, const size_t sz)
     {
-        waitForAmount(sz, lck);
+        waitForAmount(sz);
         if (m_Abort) return;
 
         for (size_t i=0;i < sz;i++)
@@ -210,9 +210,9 @@ private:
         }
     }
 
-    void staticRead(T *buff, const size_t sz, std::unique_lock<std::mutex> &lck)
+    void staticRead(T *buff, const size_t sz)
     {
-        waitForAmount(sz, lck);
+        waitForAmount(sz);
         if (m_Abort) return;
 
         for (size_t i=0;i < sz;i++)
@@ -222,7 +222,7 @@ private:
         }
     }
 
-    void waitNotFull(std::unique_lock<std::mutex> &lck)
+    void waitNotFull()
     {
         if (!isFull())
             return;
@@ -230,16 +230,16 @@ private:
         ++m_WaitForNotFullCount;
         while(1)
         {
-            lck.unlock();
+            m_Mtx.unlock();
             timer::sleepUs(m_YieldTime);
-            lck.lock();
+            m_Mtx.lock();
 
             if (m_Abort || !isFull())
                 break;
         }
     }
 
-    void waitForAmount(const size_t amt, std::unique_lock<std::mutex> &lck)
+    void waitForAmount(const size_t amt)
     {
         if (getAmount() >= amt)
             return;
@@ -247,9 +247,9 @@ private:
         ++m_WaitForAmtCount;
         while(1)
         {
-            lck.unlock();
+            m_Mtx.unlock();
             timer::sleepUs(m_YieldTime);
-            lck.lock();
+            m_Mtx.lock();
 
             if (m_Abort || (getAmount() >= amt))
                 break;
