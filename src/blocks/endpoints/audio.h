@@ -86,7 +86,7 @@ public:
 
     struct stream_stats
     {
-        // The number of overflows on the input detected.
+        //! The number of overflows on the input detected.
         uint32_t overflow;
 
         //! The number of underflows on the output detected.
