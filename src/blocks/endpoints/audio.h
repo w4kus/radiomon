@@ -146,6 +146,7 @@ public:
                     const void *data = nullptr)
     {
         assert(rate && blkSz);
+        m_SamplingRate = rate;
         return static_cast<T*>(this)->set_device_impl(devs, rate, blkSz, bufSz, data);
     }
 
@@ -174,8 +175,7 @@ public:
     {
         // Endpoint sources must set the sampling rate on each block processing call. In sink
         // mode it doesn't matter.
-        m_SamplingRate = m_SamplingRate;
-
+        block::m_SamplingRate = m_SamplingRate;
         static_cast<T*>(this)->process_samples_impl(inBlock, outBlock);
     }
 
