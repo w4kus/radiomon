@@ -28,8 +28,10 @@ namespace util {
  *
  * You can also use it for any buffer requirements as long as it is for arithmetic or
  * complex types. This has similiar form to C++ smart pointers with the
- * one big difference being that *aligned_ptr* types have fixed sized buffers which
- * are determined at instantiation.
+ * one big difference being that *aligned_ptr* types can be re-sized during runtime using
+ * the helper functions below. Dynamically allocated buffers can grow or shrink in
+ * size but the capacity can only grow. Statically allocated buffers have a hard
+ * limit equal to the capacity at creation so they can only shrink.
  *
  * See examples throughout the source code, especially in the *block* directory.
  *
@@ -52,6 +54,7 @@ void init_aligned_ptr(aligned_ptr<T> &ap, const size_t size)
         ap.del_ptr();
         ap.create_ptr(size);
         ap.m_Size = size;
+        ap.m_Capacity = size;
     }
 }
 
@@ -65,34 +68,66 @@ void init_aligned_ptr(aligned_ptr<T> &ap, const size_t size, const T *values)
         ap.del_ptr();
         ap.create_ptr(size);
         ap.m_Size = size;
+        ap.m_Capacity = size;
         std::memcpy(ap.m_Ptr, values, size * sizeof(T));
     }
 }
 
-//! Not for static buffer instances
 template<typename T>
 void init_aligned_ptr_on_resize(aligned_ptr<T> &ap, const size_t size)
 {
     static_assert(is_std_complex_v<T> || (std::is_arithmetic<T>::value == std::true_type()));
-    if (!ap.m_IsStatic && (ap.size() != size))
+    if (!ap.m_IsStatic)
     {
-        ap.del_ptr();
-        ap.create_ptr(size);
-        ap.m_Size = size;
+        if (ap.size() < size)
+        {
+            if (size > ap.capacity())
+            {
+                ap.del_ptr();
+                ap.create_ptr(size);
+                ap.m_Size = size;
+                ap.m_Capacity = size;
+            }
+            else
+                ap.m_Size = size;
+        }
+        else
+            ap.m_Size = size;
+    }
+    else
+    {
+        if (size <= ap.capacity())
+            ap.m_Size = size;
     }
 }
 
-//! Not for static buffer instances
 template<typename T>
 void init_aligned_ptr_on_resize(aligned_ptr<T> &ap, const size_t size, const T *values)
 {
     static_assert(is_std_complex_v<T> || (std::is_arithmetic<T>::value == std::true_type()));
-    if (!ap.m_IsStatic && (ap.size() != size))
+    if (!ap.m_IsStatic)
     {
-        ap.del_ptr();
-        ap.create_ptr(size);
-        ap.m_Size = size;
+        if (ap.size() < size)
+        {
+            if (size > ap.capacity())
+            {
+                ap.del_ptr();
+                ap.create_ptr(size);
+                ap.m_Size = size;
+                ap.m_Capacity = size;
+            }
+            else
+                ap.m_Size = size;
+        }
+        else
+            ap.m_Size = size;
+
         std::memcpy(ap.m_Ptr, values, size * sizeof(T));
+    }
+    else
+    {
+        if (size <= ap.capacity())
+            ap.m_Size = size;
     }
 }
 
@@ -104,6 +139,7 @@ void init_aligned_ptr_static(aligned_ptr<T> &ap, size_t size, const T *buff)
     ap.del_ptr();
     ap.m_Ptr = (T *)buff;
     ap.m_Size = size;
+    ap.m_Capacity = size;
     ap.m_IsStatic = true;
 }
 
@@ -114,18 +150,18 @@ class aligned_ptr
 
 public:
 
-    //! Default contructor - creates an instance in the cleared state.
+    //! Default constructor - creates an instance in the cleared state.
     //! Use one of the *init_aligned_ptr()* helpers to set things up when ready.
-    aligned_ptr() : m_Ptr{nullptr}, m_Size{0}, m_IsStatic{false} { }
+    aligned_ptr() : m_Ptr{nullptr}, m_Size{0}, m_IsStatic{false}, m_Capacity{0} { }
 
     //! parametric constuctor #1
-    explicit aligned_ptr(const size_t size) : m_Ptr{nullptr}, m_Size{size}, m_IsStatic{false}
+    explicit aligned_ptr(const size_t size) : m_Ptr{nullptr}, m_Size{size}, m_IsStatic{false}, m_Capacity{size}
     {
         create_ptr(size);
     }
 
     //! parametric constructor #2
-    aligned_ptr(const size_t size, const T *values) : m_Ptr{nullptr}, m_Size{size}, m_IsStatic{false}
+    aligned_ptr(const size_t size, const T *values) : m_Ptr{nullptr}, m_Size{size}, m_IsStatic{false}, m_Capacity{size}
     {
         create_ptr(size);
         std::memcpy(m_Ptr, values, size * sizeof(T));
@@ -142,7 +178,8 @@ public:
 
         m_Size = other.m_Size;
         m_IsStatic = other.m_IsStatic;
-        create_ptr(m_Size);
+        m_Capacity = other.m_Capacity;
+        create_ptr(m_Capacity);
         std::memcpy(m_Ptr, other.m_Ptr, m_Size * sizeof(T));
     }
 
@@ -157,8 +194,9 @@ public:
 
         m_Size = other.m_Size;
         m_IsStatic = other.m_IsStatic;
+        m_Capacity = other.m_Capacity;
 
-        create_ptr(m_Size);
+        create_ptr(m_Capacity);
         std::memcpy(m_Ptr, other.m_Ptr, m_Size * sizeof(T));
 
         return *this;
@@ -170,6 +208,7 @@ public:
         m_Ptr = std::exchange(other.m_Ptr, nullptr);
         m_Size = std::exchange(other.m_Size, 0);
         m_IsStatic = std::exchange(other.m_IsStatic, false);
+        m_Capacity = std::exchange(other.m_Capacity, 0);
     }
 
     //! move assignment constructor
@@ -182,6 +221,7 @@ public:
         m_Ptr = std::exchange(other.m_Ptr, nullptr);
         m_Size = std::exchange(other.m_Size, 0);
         m_IsStatic = std::exchange(other.m_IsStatic, false);
+        m_Capacity = std::exchange(other.m_Capacity, 0);
 
         return *this;
     }
@@ -210,7 +250,7 @@ public:
         return m_Ptr;
     }
 
-    //! Get the size of the contained buffer.
+    //! Get the number of elements in the contained buffer.
     const size_t size() const
     {
         return m_Size;
@@ -220,6 +260,12 @@ public:
     const bool empty() const
     {
         return (bool)!m_Ptr;
+    }
+
+    //! Get the capacity of the contained buffer.
+    const size_t capacity() const
+    {
+        return m_Capacity;
     }
 
     //! Reset the instance to a default contructed state
@@ -359,6 +405,7 @@ private:
     T* m_Ptr;
     size_t m_Size;
     bool m_IsStatic;
+    size_t m_Capacity;
 };
 
 //! Helper functions to create an instance on the heap. If you want to initialize
