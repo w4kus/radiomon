@@ -129,7 +129,7 @@ public:
     //! app might place this in a high priority thread with the results being passed to another
     //! thread via a ring buffer. It really all depends on how much data the chain's source
     //! generates.
-    //! \note Always be mindful of overruns in the source.
+    //! \note Always be mindful of overruns in the source and underruns in the sink.
     void iterate();
 
     //! This resets the chain to a cleared state with all allocated objects freed up.
@@ -181,7 +181,7 @@ protected:
     util::aligned_ptr<float>                m_fBuff[2];
     util::aligned_ptr<rm_math::complex_f>   m_cBuff[2];
 
-    // Holders for owned shared pointers - they get relased by the clear() method or
+    // Holders for owned pointers to block instances - they get released by the clear() method or
     // by instance destruction.
     std::vector<std::unique_ptr<dsp::block<dsp::func_ff>>> m_FloatBlocks;
     std::vector<std::unique_ptr<dsp::block<dsp::func_fc>>> m_FloatCmplxBlocks;
