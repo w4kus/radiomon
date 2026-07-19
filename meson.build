@@ -10,8 +10,13 @@ fftw_deps = dependency('fftw3f', version: '>= 3.0.0')
 portaudio_deps = dependency('portaudio-2.0', version: '>= 19')
 
 inc = include_directories(
-	[ 'src', 'test', 'src/utils', 'src/blocks', 'src/components',
-	'src/blocks/endpoints', 'src/blocks/endpoints/audio-backends']
+	[ 'src',
+	'test',
+	'src/utils',
+	'src/blocks',
+	'src/components',
+	'src/blocks/endpoints',
+	'src/blocks/endpoints/audio-backends' ]
 )
 
 add_global_arguments('-fno-exceptions', language: 'cpp')
