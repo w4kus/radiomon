@@ -66,7 +66,7 @@ protected:
     //! \cond
 
     static constexpr char const *ID = "ZMQ";
-    util::trace<true> m_Trace;
+    util::trace<> m_Trace;
 
     void checkMsg(const int rc, const char *prompt, zmq_msg_t &msg);
     void checkPtr(const void *p, const char *prompt);
