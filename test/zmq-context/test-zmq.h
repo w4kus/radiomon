@@ -16,7 +16,7 @@ using sample_t = rm_math::complex_f;
 struct test_zmq_vars
 {
 #ifdef TEST_ZMQ_HDR_STR
-    static constexpr uint8_t arr_size = 0;
+    static constexpr uint8_t arr_size = 7;
     static constexpr char const *HDR = "SAMPLES";
 #else
     static constexpr uint8_t arr_size = 4;

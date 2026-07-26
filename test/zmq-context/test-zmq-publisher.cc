@@ -25,24 +25,14 @@ constexpr uint32_t sampleSize = Fs / F;
     using sig_func      = dsp::endpoints::signal_source_ff;
     using cb_func       = dsp::endpoints::callback_ff;
 
-    #ifdef TEST_ZMQ_HDR_STR
-        using zmq_func_snk  = dsp::zmq_sample_pub_ff_snk;
-        using zmq_func_op   = dsp::zmq_sample_pub_ff_op;
-    #else
-        using zmq_func_snk  = dsp::zmq_sample_pub_ff_snk_array<4>;
-        using zmq_func_op   = dsp::zmq_sample_pub_ff_op_array<4>;
-    #endif
+    using zmq_func_snk  = dsp::zmq_sample_pub_ff_snk;
+    using zmq_func_op   = dsp::zmq_sample_pub_ff_op;
 #else
     using sig_func      = dsp::endpoints::signal_source_cc;
     using cb_func       = dsp::endpoints::callback_cc;
 
-    #ifdef TEST_ZMQ_HDR_STR
-        using zmq_func_snk  = dsp::zmq_sample_pub_cc_snk;
-        using zmq_func_op   = dsp::zmq_sample_pub_cc_op;
-    #else
-        using zmq_func_snk  = dsp::zmq_sample_pub_cc_snk_array<4>;
-        using zmq_func_op   = dsp::zmq_sample_pub_cc_op_array<4>;
-    #endif
+    using zmq_func_snk  = dsp::zmq_sample_pub_cc_snk;
+    using zmq_func_op   = dsp::zmq_sample_pub_cc_op;
 #endif
 
 static bool running = true;
@@ -68,6 +58,9 @@ int main(int argc, char **argvp)
 
     menu.display();
 
+///// Choose one of the following three tests
+// Stand alone test - use test-zmq-subcriber app
+#if 1
     // Fix up the 'HDR' type
 #ifdef TEST_ZMQ_HDR_STR
     auto HDR = test_zmq_vars::HDR;
@@ -75,9 +68,6 @@ int main(int argc, char **argvp)
     const auto HDR = static_cast<std::array<uint8_t, test_zmq_vars::arr_size>>(test_zmq_vars::HDR);
 #endif
 
-///// Choose one of the following three tests
-// Stand alone test
-#if 1
     sample_msg<sample_t, PUB_EP, test_zmq_vars::arr_size> sm { HDR };
 
     sm.init(test_zmq_vars::EPID);
@@ -98,12 +88,12 @@ int main(int argc, char **argvp)
     }
 #endif
 
-// In-chain as an operator test
+// In-chain as an operator test - use test-zmq-subcriber-block app
 #if 0
     util::chain chain { "ZMQ" };
 
     chain.add(std::make_unique<sig_func>(sampleSize, F, Fs), "SIG_SOURCE");
-    chain.add(std::make_unique<zmq_func_snk>(static_cast<const char *>(test_zmq_vars::EPID), HDR), "ZMQ_SNK");
+    chain.add(std::make_unique<zmq_func_snk>(static_cast<const char *>(test_zmq_vars::EPID)), "ZMQ_SNK");
 
     assert(chain.setup());
 
@@ -115,12 +105,12 @@ int main(int argc, char **argvp)
     }
 #endif
 
-// In-chain as a sink test
+// In-chain as a sink test - use test-zmq-subcriber-block app
 #if 0
     util::chain chain { "ZMQ" };
 
     chain.add(std::make_unique<sig_func>(sampleSize, F, Fs), "SIG_SOURCE");
-    chain.add(std::make_unique<zmq_func_snk>(static_cast<const char *>(test_zmq_vars::EPID), HDR), "ZMQ_OP");
+    chain.add(std::make_unique<zmq_func_snk>(static_cast<const char *>(test_zmq_vars::EPID)), "ZMQ_OP");
     chain.add(std::make_unique<cb_func>(callback), "CB_SNK");
 
     assert(chain.setup());
