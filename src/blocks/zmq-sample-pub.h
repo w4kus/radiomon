@@ -11,6 +11,15 @@
 
 namespace dsp {
 
+union value_rate_t
+{
+    uint8_t bytes[4];
+    rate_t val;
+};
+
+constexpr uint8_t SAMPLES_FLOAT = 0x01;
+constexpr uint8_t SAMPLES_CMPLX = 0x02;
+
 /*! \brief ZMQ Publisher for Samples in a Chain
  *
  * This is a chain wrapper for ZMQ support. It simply forwards incoming samples to the
@@ -22,15 +31,6 @@ namespace dsp {
   * \tparam B            The block function type. See block.h.
   * \tparam block_type   The block type. See block.h.
 */
-
-union value_rate_t
-{
-    uint8_t bytes[4];
-    rate_t val;
-};
-
-constexpr uint8_t SAMPLES_FLOAT = 0x01;
-constexpr uint8_t SAMPLES_CMPLX = 0x02;
 
 template<typename T, typename B, block_type type>
 class zmq_sample_pub : public block<B>
@@ -84,6 +84,8 @@ private:
     std::array<uint8_t, def_hdr.size()> m_Hdr;
 };
 
+//! \cond
+
 // Partial specialization for std::complex which requires a different header.
 template<block_type type>
 class zmq_sample_pub<rm_math::complex_f, func_cc, type> : public block<func_cc>
@@ -135,6 +137,8 @@ private:
     util::zmq::sample_msg<rm_math::complex_f, util::zmq::PUB_EP, def_hdr.size()> m_Msg;
     std::array<uint8_t, def_hdr.size()> m_Hdr;
 };
+
+//! \endcond
 
 
 // Convenient aliases for float->float operator and sink objects

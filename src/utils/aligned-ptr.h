@@ -14,37 +14,12 @@
 
 namespace util {
 
-/*! \brief Container for an aligned buffer which may be required depending
- * on the system on which the system is running and the math library being used.
- * It is both movable and copyable and has random access iterator support.
- *
- * \note Static buffer instances are **NOT** copyable, but are movable. A runtime
- * assert is thrown if a copy is attempted.
- *
- * This is the main container used throughout *radiomon* to pass sample blocks
- * down the chains. You must use this when sourcing or sinking samples.
- * Using this frees the block implementations from having to ensure the buffers
- * it handles are properly aligned.
- *
- * You can also use it for any buffer requirements as long as it is for arithmetic or
- * complex types. This has similiar form to C++ smart pointers with the
- * one big difference being that *aligned_ptr* types can be re-sized during runtime using
- * the helper functions below. Dynamically allocated buffers can grow or shrink in
- * size but the capacity can only grow. Statically allocated buffers have a hard
- * limit equal to the capacity at creation so they can only shrink.
- *
- * See examples throughout the source code, especially in the *block* directory.
- *
- * \note Aligment of static buffers are **NOT** guaranteed. The caller is responsible
- * for ensuring this when creating the buffer if alignment is necessary.
- */
-
-//! Helper functions to intialize an empty instance. You can call these mulitple times
-//! to re-initialize if desired.
+// Helper functions to intialize an empty instance. You can call these mulitple times
+// to re-initialize if desired.
 template<typename T>
 class aligned_ptr;
 
-//! Not for static buffer instances
+// Not for static buffer instances
 template<typename T>
 void init_aligned_ptr(aligned_ptr<T> &ap, const size_t size)
 {
@@ -58,7 +33,7 @@ void init_aligned_ptr(aligned_ptr<T> &ap, const size_t size)
     }
 }
 
-//! Not for static buffer instances
+// Not for static buffer instances
 template<typename T>
 void init_aligned_ptr(aligned_ptr<T> &ap, const size_t size, const T *values)
 {
@@ -131,8 +106,8 @@ void init_aligned_ptr_on_resize(aligned_ptr<T> &ap, const size_t size, const T *
     }
 }
 
-//! Only for static buffer instances or to convert dynamic buffer instances
-//! to a static buffer instance.
+// Only for static buffer instances or to convert dynamic buffer instances
+// to a static buffer instance.
 template<typename T>
 void init_aligned_ptr_static(aligned_ptr<T> &ap, size_t size, const T *buff)
 {
@@ -142,6 +117,30 @@ void init_aligned_ptr_static(aligned_ptr<T> &ap, size_t size, const T *buff)
     ap.m_Capacity = size;
     ap.m_IsStatic = true;
 }
+
+/*! \brief Container for an Aligned Buffer.
+ *
+ * This is the main container used throughout *radiomon* to pass sample blocks
+ * down the chains. You must use this when sourcing or sinking samples.
+ * Using this frees the block implementations from having to ensure the buffers
+ * it handles are properly aligned. It is both movable and copyable and has random
+ * access iterator support.
+ *
+ * You can also use it for any buffer requirements as long as it is for arithmetic or
+ * complex types. This has similiar form to C++ smart pointers with the
+ * one big difference being that *aligned_ptr* types can be re-sized during runtime using
+ * the helper functions below. Dynamically allocated buffers can grow or shrink in
+ * size but the capacity can only grow. Statically allocated buffers have a hard
+ * limit equal to the capacity at creation so they can only shrink.
+ *
+ * See examples throughout the source code, especially in the *block* directory.
+ *
+ * \note Aligment of static buffers are **NOT** guaranteed. The caller is responsible
+ * for ensuring this when creating the buffer if alignment is necessary. Also, are
+ * **NOT** copyable, but are movable. A runtime assert is thrown if a copy is attempted.
+ *
+ * \tparam T  Either *float* or *std::complex<float>*.
+ */
 
 template<typename T>
 class aligned_ptr

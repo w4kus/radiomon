@@ -80,6 +80,7 @@ private:
     FILE *m_File;
 };
 
+//! \cond
 // complex specialization
 template<>
 class text_file_sink<rm_math::complex_f, dsp::func_cc> : public block<dsp::func_cc>
@@ -133,6 +134,8 @@ private:
     const char *m_FileName;
     FILE *m_File;
 };
+
+//! \endcond
 
 using text_file_sink_ff = text_file_sink<float, dsp::func_ff>;
 using text_file_sink_cc = text_file_sink<rm_math::complex_f, dsp::func_cc>;
