@@ -13,3 +13,11 @@ executable('test-zmq-subscriber',
     include_directories : [ inc ],
     dependencies: [ volk_deps, zmq_deps ]
 )
+
+executable('test-zmq-subscriber-block',
+    'test-zmq-subscriber-block.cc',
+    test_sources,
+    meson.project_source_root() + '/src/utils/zmq/context.cc',
+    include_directories : [ inc ],
+    dependencies: [ volk_deps, zmq_deps ]
+)
