@@ -8,11 +8,31 @@
 #include <complex>
 #include <string>
 #include <array>
+#include <type_traits>
+
 
 #include "context.h"
 #include "rm-math.h"
 
 namespace util { namespace zmq {
+
+template<uint8_t size>
+std::string tostring(const std::array<uint8_t, size> bytes)
+{
+    std::string ret;
+
+    for (int i=0;i < size;i++)
+        ret.push_back(bytes[i]);
+
+    return ret;
+}
+
+template<uint8_t size>
+void tobytes(const std::string &str, std::array<uint8_t, size> &bytes)
+{
+    for (int i=0;i < size;i++)
+        bytes[i] = str[i];
+}
 
 /*! \brief ZMQ Sample Bridge
  *
@@ -21,15 +41,14 @@ namespace util { namespace zmq {
  *
  * \tparam T            The type of *aligned_ptr* to create. Either *float* or *std::vector<float>*.
  * \tparam sock_type    The socket type to use. See *socket_ep_t* in context.h.
- * \tparam array_size   The size of the header array if used. Defaults to zero which means a string is
- *                      used for the header.
+ * \tparam array_size   The size of the header array if used.
  *
  * \note This sets up an IPC (unix) socket which is currently not available on Windows. See the ZMQ
  * documentation for details. Adding TCP/UDP/etc.. should be trivial but it has not been tried and
  * tested yet.
  */
 
-template<typename T, socket_ep_t sock_type, uint8_t array_size = 0>
+template<typename T, socket_ep_t sock_type, uint8_t array_size>
 class sample_msg : public context
 {
     static_assert((std::is_floating_point<T>::value == std::true_type()) || util::is_std_complex_v<T>);
@@ -37,28 +56,33 @@ class sample_msg : public context
 
 public:
 
-    //! Create an instance using a std::string containing the header to send.
-    sample_msg(const std::string &hdr) : m_sMsgHdr { hdr }, m_Sock { nullptr }
+    //! Create an instance with no header specified.
+    //! \note  A publisher instance **MUST** set a header via one of the header() methods. Subscribers may
+    //! omit specifying a header if no filtering is desired.
+    sample_msg() : m_Sock { nullptr }
     {
-        m_MsgHdr = m_sMsgHdr.data();
-        m_MsgHdrLen = hdr.size();
     }
 
-    //! Create an instance using a std::array of bytes containing the header to send.
-    sample_msg(const std::array<uint8_t, array_size> &hdr) : m_aMsgHdr { hdr }, m_Sock { nullptr }
+    //! Create an instance using a std::string containing the header.  For instances of a PUB, this will be sent
+    //! to the SUB side. For intances of a SUB, this will be used for filtering.
+    //! \note The *array_size* template parameter must be set to the number of characters in the string.
+    sample_msg(const std::string &hdr) : m_Sock { nullptr }
     {
-        static_assert(array_size > 0);
+        assert(array_size >= hdr.size());
+        tobytes<array_size>(hdr, m_MsgHdr);
+    }
 
-        m_MsgHdr = m_aMsgHdr.data();
-        m_MsgHdrLen = hdr.size();
+    //! Create an instance using a std::array of bytes containing the header.  For instances of a PUB, this will be sent
+    //! to the SUB side. For intances of a SUB, this will be used for filtering.
+    sample_msg(const std::array<uint8_t, array_size> &hdr) : m_MsgHdr { hdr }, m_Sock { nullptr }
+    {
+        assert(array_size >= hdr.size());
     }
 
     ~sample_msg()
     {
         if (m_Sock) zmq_close(m_Sock);
     }
-
-    sample_msg() = delete;
 
     //! Initialize and setup the socket.
     //! @param [in] socketId  A string containing an id for the socket. The sender (publisher) and
@@ -100,6 +124,8 @@ public:
 
             if (sock_type == PUB_EP)
             {
+                assert(m_MsgHdr.size());
+
                 val = zmq_bind(m_Sock, endpoint);
                 checkInt(val, "zmq_bind");
             }
@@ -108,7 +134,7 @@ public:
                 val = zmq_connect(m_Sock, endpoint);
                 checkInt(val, "zmq_connect");
 
-                zmq_setsockopt(m_Sock, ZMQ_SUBSCRIBE, m_MsgHdr, m_MsgHdrLen);
+                zmq_setsockopt(m_Sock, ZMQ_SUBSCRIBE, m_MsgHdr.data(), m_MsgHdr.size());
             }
 
 #ifdef NDEBUG
@@ -124,6 +150,18 @@ public:
         return true;
     }
 
+    void header(const std::string &hdr)
+    {
+        assert(array_size >= hdr.size());
+        tobytes(hdr, m_MsgHdr);
+    }
+
+    void header(const std::array<uint8_t, array_size> &hdr)
+    {
+        assert(array_size >= hdr.size());
+        m_MsgHdr = hdr;
+    }
+
     //! Send a block of samples to the subscriber.
     //! @param [in] samples  The samples to send
     //! @return Zero if successful, -1 otherwise. *errno* will contain the error code.
@@ -136,10 +174,10 @@ public:
         {
             zmq_msg_t msg;
 
-            rc = zmq_msg_init_size(&msg, m_MsgHdrLen);
+            rc = zmq_msg_init_size(&msg, m_MsgHdr.size());
             checkMsg(rc, "zmq_msg_init_size", msg);
 
-            memcpy(zmq_msg_data(&msg), m_MsgHdr, m_MsgHdrLen);
+            memcpy(zmq_msg_data(&msg), m_MsgHdr.data(), m_MsgHdr.size());
 
             rc = zmq_msg_send(&msg, m_Sock, ZMQ_SNDMORE);
             checkMsg(rc, "zmq_msg_send", msg);
@@ -157,12 +195,16 @@ public:
     }
 
     //! Receive a block of samples from the publisher.
+    //! @tparam      hdr_array_size  The size of the array to receive the header bytes.
+    //!
+    //! @param [out] hdr      The received header bytes.
     //! @param [out] samples  The received block of samples if successful; undefined otherwise.
     //! @param [in]  block    If *true* this will block until samples are received.
     //! @return Zero if successful, -1 otherwise. *errno* will contian the error code. If
     //! operating in non-blocking mode and there's no samples available, this will return
     //! -1 and *errno* will be set to *EAGAIN*.
-    int recv(aligned_ptr<T> &samples, bool block = false)
+    template<uint8_t hdr_array_size>
+    int recv(std::array<uint8_t, hdr_array_size> &hdr, aligned_ptr<T> &samples, bool block = false)
     {
         int rc = -1;
         errno = EFAULT;
@@ -197,33 +239,17 @@ public:
 
                 if (!partIdx)
                 {
-                    bool hdrMatch = false;
+                    int cpSize = (rc > hdr_array_size) ? hdr_array_size : rc;
+                    uint8_t *p = static_cast<uint8_t*>(zmq_msg_data(&msg));
 
-                    // Check the header
-                    if ((array_size > 0) && (m_aMsgHdr.size() == static_cast<size_t>(rc)))
-                    {
-                        uint8_t *hdr = static_cast<uint8_t *>(zmq_msg_data(&msg));
-                        hdrMatch = !memcmp(hdr, m_aMsgHdr.data(), rc);
-                    }
-                    else if (m_sMsgHdr.size() == static_cast<size_t>(rc))
-                    {
-                        char *hdr = static_cast<char *>(zmq_msg_data(&msg));
-                        hdrMatch = !memcmp(hdr, m_sMsgHdr.data(), rc);
-                    }
-
-                    if (!hdrMatch)
-                    {
-                        rc = -1;
-                        errno = EAGAIN;
-                        break;
-                    }
+                    std::memcpy(hdr.data(), p, cpSize);
 
                     ++partIdx;
                 }
                 else
                 {
                     init_aligned_ptr_on_resize<T>(samples, rc / sizeof(T));
-                    memcpy(&samples[0], zmq_msg_data(&msg), rc);
+                    std::memcpy(&samples[0], zmq_msg_data(&msg), rc);
                     ++partIdx;
                     rc = 0;
                 }
@@ -244,10 +270,7 @@ public:
 
 private:
 
-    std::string                       m_sMsgHdr;
-    std::array<uint8_t, array_size>   m_aMsgHdr;
-    int                               m_MsgHdrLen;
-    msg_hdr_t                         m_MsgHdr;
+    std::array<uint8_t, array_size>   m_MsgHdr;
     sock_t                            m_Sock;
 
     static constexpr char const *ep_str = "ipc:///tmp/radiomon_sock-";
