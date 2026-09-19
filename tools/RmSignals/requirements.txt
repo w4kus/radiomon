@@ -1,0 +1,4 @@
+pyside6>=6.11
+numpy>=2.2.0
+pyqtgraph>=0.14.0
+pyzmq>=27.1.0
