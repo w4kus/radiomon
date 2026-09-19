@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <arpa/inet.h>
-
 #include "block.h"
 #include "zmq/sample-msg.h"
 
@@ -58,7 +56,7 @@ public:
     void handler(const util::aligned_ptr<T> &in, util::aligned_ptr<T> &out)
     {
         value_rate_t rate;
-        rate.val = htonl(block<B>::getSamplingRate());
+        rate.val = block<B>::getSamplingRate();
 
         // Send to the socket
         m_Hdr[1] = rate.bytes[0];
@@ -112,7 +110,7 @@ public:
     void handler(const util::aligned_ptr<rm_math::complex_f> &in, util::aligned_ptr<rm_math::complex_f> &out)
     {
         value_rate_t rate;
-        rate.val = htonl(getSamplingRate());
+        rate.val = getSamplingRate();
 
         // Send to the socket
         m_Hdr[1] = rate.bytes[0];

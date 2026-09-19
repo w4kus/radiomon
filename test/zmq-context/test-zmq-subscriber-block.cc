@@ -36,7 +36,7 @@ int main(int argc, char **argvp)
             rate.bytes[2] = hdr[3];
             rate.bytes[3] = hdr[4];
 
-            printf("type %02X, rate %u\n", hdr[0], ntohl(rate.val));
+            printf("type %02X, rate %u\n", hdr[0], rate.val);
 
         #ifdef TEST_ZMQ_FLOAT
             util::printReal(f, samples.size(), samples.data());
