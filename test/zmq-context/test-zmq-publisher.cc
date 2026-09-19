@@ -14,6 +14,7 @@
 #include "signal-source.h"
 #include "callback-sink.h"
 #include "test-zmq.h"
+#include "text-file-sink.h"
 
 using namespace util::zmq;
 
@@ -36,11 +37,21 @@ constexpr uint32_t sampleSize = Fs / F;
 #endif
 
 static bool running = true;
-bool test(const std::string &input);
+static bool test(const std::string &input);
 
-void callback(const util::aligned_ptr<sample_t> &in)
+static util::timer::timer_t cbTick;
+static size_t rxAmt = 0, rxTotal = 0;
+static void callback(const util::aligned_ptr<sample_t> &in)
 {
-    printf("cb: %lu\n", in.size());
+    rxAmt += in.size();
+    rxTotal += in.size();
+
+    if (util::timer::EndTimer(cbTick) > 1000)
+    {
+        printf("cb: rx %lu samples, %lu total\n", rxAmt, rxTotal);
+        rxAmt = 0;
+        cbTick = util::timer::StartTimer();
+    }
 }
 
 int main(int argc, char **argvp)
@@ -60,7 +71,7 @@ int main(int argc, char **argvp)
 
 ///// Choose one of the following three tests
 // Stand alone test - use test-zmq-subcriber app
-#if 1
+#if 0
     // Fix up the 'HDR' type
 #ifdef TEST_ZMQ_HDR_STR
     auto HDR = test_zmq_vars::HDR;
@@ -89,6 +100,27 @@ int main(int argc, char **argvp)
 #endif
 
 // In-chain as an operator test - use test-zmq-subcriber-block app
+#if 1
+    util::chain chain { "ZMQ" };
+
+    chain.add(std::make_unique<sig_func>(sampleSize, F, Fs), "SIG_SOURCE");
+    chain.add(std::make_unique<zmq_func_op>(static_cast<const char *>(test_zmq_vars::EPID)), "ZMQ_OP");
+    chain.add(std::make_unique<cb_func>(callback), "CB_SINK");
+    // chain.add(std::make_unique<dsp::endpoints::text_file_sink_ff>("test.txt"), "FILE_SINK");
+
+    assert(chain.setup());
+
+    cbTick = util::timer::StartTimer();
+
+    while(running)
+    {
+        chain.iterate();
+        menu.processInput();
+        util::timer::sleep(1);
+    }
+#endif
+
+// In-chain as a sink test - use test-zmq-subcriber-block app
 #if 0
     util::chain chain { "ZMQ" };
 
@@ -105,28 +137,10 @@ int main(int argc, char **argvp)
     }
 #endif
 
-// In-chain as a sink test - use test-zmq-subcriber-block app
-#if 0
-    util::chain chain { "ZMQ" };
-
-    chain.add(std::make_unique<sig_func>(sampleSize, F, Fs), "SIG_SOURCE");
-    chain.add(std::make_unique<zmq_func_snk>(static_cast<const char *>(test_zmq_vars::EPID)), "ZMQ_OP");
-    chain.add(std::make_unique<cb_func>(callback), "CB_SNK");
-
-    assert(chain.setup());
-
-    while(running)
-    {
-        chain.iterate();
-        menu.processInput();
-        util::timer::sleep(10);
-    }
-#endif
-
     return 0;
 }
 
-bool test(const std::string &input)
+static bool test(const std::string &input)
 {
     running = false;
     return false;
