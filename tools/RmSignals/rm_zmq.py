@@ -41,13 +41,17 @@ class ZmqHandler(QObject):
         self.__running = False
         self.finished.emit()
 
-    @property
+    @property      # = number of samples per period
     def period(self):
         return self.__period
 
     @period.setter
     def period(self, period: int):
         self.__newPeriod = period
+
+    @property
+    def samplesPerPeroid(self):
+        return self.__samplesPerPeriod
 
     def __resetBuffer(self, type: np.dtype, dim = (2,)):
         self.__currentBuff = 0
@@ -59,8 +63,7 @@ class ZmqHandler(QObject):
         print("Starting socket thread...")
 
         updateBuffer = False
-        dt = np.dtype(np.float32)
-        step = 4
+        dt = self.__currentType
         sampleCount = 0
 
         while self.__running:
@@ -69,13 +72,6 @@ class ZmqHandler(QObject):
 
                 type = np.uint8(parts[0].buffer[0])
                 rate = np.frombuffer(parts[0].buffer, dtype=np.uint8, count=4, offset=1).view(dtype=np.uint32)[0]
-
-                if type == SAMPLES_FLOAT:
-                    dt = np.dtype(np.float32)
-                    step = 4
-                else:
-                    dt = np.dtype(np.complex64)
-                    step = 8
 
                 # New type?
                 if (dt.kind != self.__currentType.kind):
@@ -96,24 +92,39 @@ class ZmqHandler(QObject):
 
                 if updateBuffer:
                     updateBuffer = False
-                    newSpp = int(self.__currentRate / 1000 * self.__period)
+                    newSpp = int(self.__currentRate * self.__period / 1000)
+
+                    # New period specified
+                    currentDim = self.__sampleBuffer[0].shape[0]
+                    print(f"Update sampling buffer: ({currentDim}) [rate={rate} period={self.__period}]")
 
                     if self.__sampleBuffer[0].shape[0] < newSpp:
-                        currentDim = self.__sampleBuffer[0].shape[0]
-                        print(f"Update sampling buffer: ({currentDim}) [rate={rate} period={self.__period}]")
                         self.__sampleBuffer[0] = np.pad(self.__sampleBuffer[0], (0, newSpp - currentDim))
                         self.__sampleBuffer[1] = np.pad(self.__sampleBuffer[1], (0, newSpp - currentDim))
+                    elif self.__sampleBuffer[0].shape[0] > newSpp:
+                        self.__sampleBuffer[0] = np.reshape(self.__sampleBuffer[0], newSpp)
+                        self.__sampleBuffer[1] = np.reshape(self.__sampleBuffer[1], newSpp)
 
                     self.__samplesPerPeriod = newSpp
+
                     sampleCount = 0
 
                 # Copy the samples from the ZMQ frame into the current sampling buffer and flush when the samples per
                 # period is reached - this is the only copy we do.
-                for os in range(0, len(parts[1].buffer), step):
-                    self.__sampleBuffer[self.__currentBuff][sampleCount] = \
-                        np.frombuffer(parts[1].buffer, dtype=np.uint8, count=step, offset=os).view(dtype=dt)[0]
+                samples = np.frombuffer(parts[1].buffer, dtype=dt)
+                size = len(samples)
+                offset = 0
 
-                    sampleCount += 1
+                while offset < size:
+                    space = self.__samplesPerPeriod - sampleCount
+                    copySz = min(space, size - offset)
+
+                    self.__sampleBuffer[self.__currentBuff][sampleCount : sampleCount + copySz] = \
+                          samples[offset : offset + copySz]
+
+                    sampleCount += copySz
+                    offset += copySz
+
                     if sampleCount == self.__samplesPerPeriod:
                         # Send a reference of the current buffer and switch to the "other" buffer
                         self.samples_recv.emit(type, rate, self.__sampleBuffer[self.__currentBuff])
@@ -121,10 +132,10 @@ class ZmqHandler(QObject):
                         self.__currentBuff = (self.__currentBuff + 1) & 1
 
             except zmq.error.Again:
-                QThread.msleep(10)
+                QThread.usleep(500)
 
-            except zmq.ContextTerminated:
-                print("Ending socket thread")
+            except Exception as e:  # noqa: BLE001
+                print(f"Ending socket thread {e}")
                 self.__running = False
 
 
