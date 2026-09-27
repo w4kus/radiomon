@@ -16,8 +16,10 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QGroupBox, QHBoxLayout, QMainWindow,
-    QMenu, QMenuBar, QSizePolicy, QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFormLayout,
+    QGroupBox, QHBoxLayout, QLabel, QMainWindow,
+    QMenu, QMenuBar, QSizePolicy, QVBoxLayout,
+    QWidget)
 
 from pyqtgraph import PlotWidget
 
@@ -25,7 +27,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1189, 823)
+        MainWindow.resize(1188, 778)
         MainWindow.setMinimumSize(QSize(0, 0))
         MainWindow.setMaximumSize(QSize(16777215, 16777215))
         self.actionQuit = QAction(MainWindow)
@@ -49,6 +51,45 @@ class Ui_MainWindow(object):
 
         self.groupBox = QGroupBox(self.centralwidget)
         self.groupBox.setObjectName(u"groupBox")
+        sizePolicy.setHeightForWidth(self.groupBox.sizePolicy().hasHeightForWidth())
+        self.groupBox.setSizePolicy(sizePolicy)
+        self.horizontalLayout_3 = QHBoxLayout(self.groupBox)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.verticalLayout = QVBoxLayout()
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.formLayout = QFormLayout()
+        self.formLayout.setObjectName(u"formLayout")
+        self.labelGraph = QLabel(self.groupBox)
+        self.labelGraph.setObjectName(u"labelGraph")
+
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.LabelRole, self.labelGraph)
+
+        self.comboBoxGraph = QComboBox(self.groupBox)
+        self.comboBoxGraph.setObjectName(u"comboBoxGraph")
+
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.FieldRole, self.comboBoxGraph)
+
+        self.labelDoman = QLabel(self.groupBox)
+        self.labelDoman.setObjectName(u"labelDoman")
+
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, self.labelDoman)
+
+        self.comboBoxDomain = QComboBox(self.groupBox)
+        self.comboBoxDomain.setObjectName(u"comboBoxDomain")
+
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.comboBoxDomain)
+
+        self.checkBoxGrid = QCheckBox(self.groupBox)
+        self.checkBoxGrid.setObjectName(u"checkBoxGrid")
+
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, self.checkBoxGrid)
+
+
+        self.verticalLayout.addLayout(self.formLayout)
+
+
+        self.horizontalLayout_3.addLayout(self.verticalLayout)
+
 
         self.horizontalLayout.addWidget(self.groupBox)
 
@@ -58,7 +99,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1189, 21))
+        self.menubar.setGeometry(QRect(0, 0, 1188, 21))
         self.menuFile = QMenu(self.menubar)
         self.menuFile.setObjectName(u"menuFile")
         MainWindow.setMenuBar(self.menubar)
@@ -75,6 +116,9 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"RadioMon Signals", None))
         self.actionQuit.setText(QCoreApplication.translate("MainWindow", u"Quit", None))
         self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Control", None))
+        self.labelGraph.setText(QCoreApplication.translate("MainWindow", u"Graph", None))
+        self.labelDoman.setText(QCoreApplication.translate("MainWindow", u"Domain", None))
+        self.checkBoxGrid.setText(QCoreApplication.translate("MainWindow", u"Enable Gird", None))
         self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"File", None))
     # retranslateUi
 
