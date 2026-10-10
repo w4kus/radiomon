@@ -8,9 +8,9 @@ import numpy as np
 import zmq
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 
-SAMPLES_FLOAT:          Final = 0x01
-SAMPLES_CMPLX:          Final = 0x02
-DEFAULT_SAMPLE_PERIOD:  Final = 100
+SAMPLE_TYPE_FLOAT:          Final = 0x01
+SAMPLE_TYPE_CMPLX:          Final = 0x02
+DEFAULT_SAMPLE_PERIOD:      Final = 100
 
 # You should access the attributes of this object via ZmqRM.instance property
 class ZmqHandler(QObject):
@@ -29,7 +29,7 @@ class ZmqHandler(QObject):
         self.__sock.setsockopt(zmq.LINGER, 0)
         self.__period = DEFAULT_SAMPLE_PERIOD
         self.__newPeriod = DEFAULT_SAMPLE_PERIOD
-        self.__samplesPerPeriod = 0
+        self.__sampleSize = 0
         self.__currentType = np.dtype(np.float32)
         self.__currentRate = 0
         self.__currentBuff = np.uint8(0)
@@ -41,7 +41,7 @@ class ZmqHandler(QObject):
         self.__running = False
         self.finished.emit()
 
-    @property      # = number of samples per period
+    @property
     def period(self):
         return self.__period
 
@@ -50,8 +50,8 @@ class ZmqHandler(QObject):
         self.__newPeriod = period
 
     @property
-    def samplesPerPeroid(self):
-        return self.__samplesPerPeriod
+    def sampleSize(self):
+        return self.__sampleSize
 
     def __resetBuffer(self, type: np.dtype, dim = (2,)):
         self.__currentBuff = 0
@@ -74,11 +74,11 @@ class ZmqHandler(QObject):
                 rate = np.frombuffer(parts[0].buffer, dtype=np.uint8, count=4, offset=1).view(dtype=np.uint32)[0]
 
                 # New type?
+                dt = np.dtype(np.float32) if type == SAMPLE_TYPE_FLOAT else np.dtype(np.complex64)
                 if (dt.kind != self.__currentType.kind):
                     self.__currentType = dt
                     print(f"Update sampling buffer: [type={dt}]")
-                    sampleCount = 0
-                    self.__resetBuffer(dt, self.__sampleBuffer[0].shape[0])
+                    updateBuffer = True
 
                 # New period?
                 if (self.__newPeriod != self.__period):
@@ -92,21 +92,14 @@ class ZmqHandler(QObject):
 
                 if updateBuffer:
                     updateBuffer = False
-                    newSpp = int(self.__currentRate * self.__period / 1000)
+                    newSize = int(self.__currentRate * self.__period / 1000)
 
                     # New period specified
                     currentDim = self.__sampleBuffer[0].shape[0]
                     print(f"Update sampling buffer: ({currentDim}) [rate={rate} period={self.__period}]")
 
-                    if self.__sampleBuffer[0].shape[0] < newSpp:
-                        self.__sampleBuffer[0] = np.pad(self.__sampleBuffer[0], (0, newSpp - currentDim))
-                        self.__sampleBuffer[1] = np.pad(self.__sampleBuffer[1], (0, newSpp - currentDim))
-                    elif self.__sampleBuffer[0].shape[0] > newSpp:
-                        self.__sampleBuffer[0] = np.reshape(self.__sampleBuffer[0], newSpp)
-                        self.__sampleBuffer[1] = np.reshape(self.__sampleBuffer[1], newSpp)
-
-                    self.__samplesPerPeriod = newSpp
-
+                    self.__sampleBuffer = self.__resetBuffer(type=self.__currentType, dim=(newSize,))
+                    self.__sampleSize = newSize
                     sampleCount = 0
 
                 # Copy the samples from the ZMQ frame into the current sampling buffer and flush when the samples per
@@ -116,7 +109,7 @@ class ZmqHandler(QObject):
                 offset = 0
 
                 while offset < size:
-                    space = self.__samplesPerPeriod - sampleCount
+                    space = self.__sampleSize - sampleCount
                     copySz = min(space, size - offset)
 
                     self.__sampleBuffer[self.__currentBuff][sampleCount : sampleCount + copySz] = \
@@ -125,14 +118,14 @@ class ZmqHandler(QObject):
                     sampleCount += copySz
                     offset += copySz
 
-                    if sampleCount == self.__samplesPerPeriod:
+                    if sampleCount == self.__sampleSize:
                         # Send a reference of the current buffer and switch to the "other" buffer
                         self.samples_recv.emit(type, rate, self.__sampleBuffer[self.__currentBuff])
                         sampleCount = 0
                         self.__currentBuff = (self.__currentBuff + 1) & 1
 
             except zmq.error.Again:
-                QThread.usleep(500)
+                QThread.usleep(50)
 
             except Exception as e:  # noqa: BLE001
                 print(f"Ending socket thread {e}")
