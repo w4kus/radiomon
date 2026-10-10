@@ -18,8 +18,8 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFormLayout,
     QGroupBox, QHBoxLayout, QLabel, QMainWindow,
-    QMenu, QMenuBar, QSizePolicy, QVBoxLayout,
-    QWidget)
+    QMenu, QMenuBar, QPushButton, QSizePolicy,
+    QSpinBox, QVBoxLayout, QWidget)
 
 from pyqtgraph import PlotWidget
 
@@ -44,10 +44,10 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.graphicsView = PlotWidget(self.centralwidget)
-        self.graphicsView.setObjectName(u"graphicsView")
+        self.plotWidget = PlotWidget(self.centralwidget)
+        self.plotWidget.setObjectName(u"plotWidget")
 
-        self.horizontalLayout.addWidget(self.graphicsView)
+        self.horizontalLayout.addWidget(self.plotWidget)
 
         self.groupBox = QGroupBox(self.centralwidget)
         self.groupBox.setObjectName(u"groupBox")
@@ -84,8 +84,27 @@ class Ui_MainWindow(object):
 
         self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, self.checkBoxGrid)
 
+        self.labelPeriod = QLabel(self.groupBox)
+        self.labelPeriod.setObjectName(u"labelPeriod")
+
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.LabelRole, self.labelPeriod)
+
+        self.spinBoxPeriod = QSpinBox(self.groupBox)
+        self.spinBoxPeriod.setObjectName(u"spinBoxPeriod")
+        self.spinBoxPeriod.setToolTipDuration(5)
+        self.spinBoxPeriod.setMinimum(10)
+        self.spinBoxPeriod.setMaximum(1000)
+        self.spinBoxPeriod.setValue(100)
+
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.FieldRole, self.spinBoxPeriod)
+
 
         self.verticalLayout.addLayout(self.formLayout)
+
+        self.pushButtonPlayPause = QPushButton(self.groupBox)
+        self.pushButtonPlayPause.setObjectName(u"pushButtonPlayPause")
+
+        self.verticalLayout.addWidget(self.pushButtonPlayPause)
 
 
         self.horizontalLayout_3.addLayout(self.verticalLayout)
@@ -115,10 +134,15 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"RadioMon Signals", None))
         self.actionQuit.setText(QCoreApplication.translate("MainWindow", u"Quit", None))
-        self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Control", None))
+        self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Settings", None))
         self.labelGraph.setText(QCoreApplication.translate("MainWindow", u"Graph", None))
         self.labelDoman.setText(QCoreApplication.translate("MainWindow", u"Domain", None))
         self.checkBoxGrid.setText(QCoreApplication.translate("MainWindow", u"Enable Gird", None))
+        self.labelPeriod.setText(QCoreApplication.translate("MainWindow", u"Sample Size(ms)", None))
+#if QT_CONFIG(tooltip)
+        self.spinBoxPeriod.setToolTip("")
+#endif // QT_CONFIG(tooltip)
+        self.pushButtonPlayPause.setText(QCoreApplication.translate("MainWindow", u"PushButton", None))
         self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"File", None))
     # retranslateUi
 
