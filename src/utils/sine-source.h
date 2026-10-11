@@ -81,13 +81,11 @@ public:
 
         // Set up a vector of phases
         for (size_t i=0;i < outBlock.size();i++)
-        {
-            v1[i] = base::m_Phase;
+            v1[i] = base::m_Phase + (i * base::m_Freq);
 
-            base::m_Phase += base::m_Freq;
-            if (base::m_Phase > (2 * M_PI))
-                base::m_Phase -= 2 * M_PI;
-        }
+        base::m_Phase += outBlock.size() * base::m_Freq;
+        if (base::m_Phase > (2 * M_PI))
+            base::m_Phase -= 2 * M_PI;
 
         rm_math::blk_cos(&v2[0], v1.data(), v1.size());
         rm_math::vect_scaler_mult(&outBlock[0], v2.data(), base::m_Gain, outBlock.size());
@@ -125,13 +123,11 @@ public:
 
         // Set up a vector of phases
         for (size_t i=0;i < outBlock.size();i++)
-        {
-            phase[i] = m_Phase;
+            phase[i] = m_Phase + (i * m_Freq);
 
-            m_Phase += m_Freq;
-            if (m_Phase > (2 * M_PI))
-                m_Phase -= 2 * M_PI;
-        }
+        m_Phase += outBlock.size() * m_Freq;
+        if (m_Phase > (2 * M_PI))
+            m_Phase -= 2 * M_PI;
 
         // real part (I)
         rm_math::blk_cos(&v1[0], phase.data(), v1.size());
