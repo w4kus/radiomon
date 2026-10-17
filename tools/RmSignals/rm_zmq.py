@@ -6,7 +6,7 @@ from typing import Final
 
 import numpy as np
 import zmq
-from PySide6.QtCore import QObject, QThread, Signal, Slot
+from PySide6.QtCore import QMutex, QMutexLocker, QObject, QThread, Signal, Slot
 
 SAMPLE_TYPE_FLOAT:          Final = 0x01
 SAMPLE_TYPE_CMPLX:          Final = 0x02
@@ -30,9 +30,14 @@ class ZmqHandler(QObject):
         self.__period = DEFAULT_SAMPLE_PERIOD
         self.__newPeriod = DEFAULT_SAMPLE_PERIOD
         self.__sampleSize = 0
+        self.__fixedSampleSize = 0
+        self.__newFixedSampleSize = 0
         self.__currentType = np.dtype(np.float32)
         self.__currentRate = 0
         self.__currentBuff = np.uint8(0)
+        self.__mutex = QMutex()
+
+        self.__mutex.unlock()
 
         # Ping pong buffer with a shape of (x,). Default to 32 bit floats
         self.__sampleBuffer = self.__resetBuffer(type=np.dtype(np.float32))
@@ -47,16 +52,24 @@ class ZmqHandler(QObject):
 
     @period.setter
     def period(self, period: int):
-        self.__newPeriod = period
+        with QMutexLocker(self.__mutex):
+            self.__fixedSampleSize = self.__newFixedSampleSize = 0
+            self.__newPeriod = period
 
     @property
     def sampleSize(self):
         return self.__sampleSize
 
+    def setFixedSampleSize(self, size: int):
+        with QMutexLocker(self.__mutex):
+            self.__newFixedSampleSize = size
+            self.__newPeriod = self.__period = 0
+
     def __resetBuffer(self, type: np.dtype, dim = (2,)):
         self.__currentBuff = 0
         return [ np.empty(shape=dim, dtype=type), np.empty(shape=dim, dtype=type) ]
 
+    # Worker thread context
     @Slot()
     def run_task(self):
 
@@ -80,9 +93,8 @@ class ZmqHandler(QObject):
                     print(f"Update sampling buffer: [type={dt}]")
                     updateBuffer = True
 
-                # New period?
-                if (self.__newPeriod != self.__period):
-                    self.__period = self.__newPeriod
+                # New period or fixed sample size?
+                if (self.__newPeriod != self.__period) or (self.__newFixedSampleSize != self.__fixedSampleSize):
                     updateBuffer = True
 
                 # New rate?
@@ -92,15 +104,25 @@ class ZmqHandler(QObject):
 
                 if updateBuffer:
                     updateBuffer = False
-                    newSize = int(self.__currentRate * self.__period / 1000)
 
-                    # New period specified
-                    currentDim = self.__sampleBuffer[0].shape[0]
-                    print(f"Update sampling buffer: ({currentDim}) [rate={rate} period={self.__period}]")
+                    with QMutexLocker(self.__mutex):
+                        newSize = int(self.__currentRate * self.__period / 1000) if self.__period != 0 else self.__fixedSampleSize
 
-                    self.__sampleBuffer = self.__resetBuffer(type=self.__currentType, dim=(newSize,))
-                    self.__sampleSize = newSize
-                    sampleCount = 0
+                        if self.__newPeriod != self.__period:
+                            self.__period = self.__newPeriod
+                            newSize = int(self.__currentRate * self.__period / 1000)
+                        elif self.__newFixedSampleSize != self.__fixedSampleSize:
+                            self.__fixedSampleSize = self.__newFixedSampleSize
+                            newSize = self.__fixedSampleSize
+
+                        # New period, sample size, or sampling rate
+
+                        self.__sampleBuffer = self.__resetBuffer(type=self.__currentType, dim=(newSize,))
+                        self.__sampleSize = newSize
+                        sampleCount = 0
+
+                        currentDim = self.__sampleBuffer[0].shape[0]
+                        print(f"Update sampling buffer: ({currentDim}) [rate={rate} period={self.__period} ss={newSize}]")
 
                 # Copy the samples from the ZMQ frame into the current sampling buffer and flush when the samples per
                 # period is reached - this is the only copy we do.
@@ -113,7 +135,7 @@ class ZmqHandler(QObject):
                     copySz = min(space, size - offset)
 
                     self.__sampleBuffer[self.__currentBuff][sampleCount : sampleCount + copySz] = \
-                          samples[offset : offset + copySz]
+                        samples[offset : offset + copySz]
 
                     sampleCount += copySz
                     offset += copySz
@@ -125,7 +147,7 @@ class ZmqHandler(QObject):
                         self.__currentBuff = (self.__currentBuff + 1) & 1
 
             except zmq.error.Again:
-                QThread.usleep(50)
+                QThread.usleep(500)
 
             except Exception as e:  # noqa: BLE001
                 print(f"Ending socket thread {e}")
