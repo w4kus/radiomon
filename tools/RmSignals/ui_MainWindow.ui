@@ -107,6 +107,40 @@
                </property>
               </widget>
              </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="labelNumPoints">
+               <property name="text">
+                <string>Number of Points</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QComboBox" name="comboBoxNumPoints"/>
+             </item>
+             <item row="5" column="0">
+              <widget class="QLabel" name="labelWindow">
+               <property name="text">
+                <string>Window</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QComboBox" name="comboBoxWindow"/>
+             </item>
+             <item row="6" column="0">
+              <widget class="QLabel" name="labelBeta">
+               <property name="text">
+                <string>Attenuation (dB)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="1">
+              <widget class="QSpinBox" name="spinBoxAtten">
+               <property name="value">
+                <number>60</number>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>

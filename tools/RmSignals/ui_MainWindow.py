@@ -91,12 +91,42 @@ class Ui_MainWindow(object):
 
         self.spinBoxPeriod = QSpinBox(self.groupBox)
         self.spinBoxPeriod.setObjectName(u"spinBoxPeriod")
-        self.spinBoxPeriod.setToolTipDuration(5)
         self.spinBoxPeriod.setMinimum(10)
         self.spinBoxPeriod.setMaximum(1000)
         self.spinBoxPeriod.setValue(100)
 
         self.formLayout.setWidget(3, QFormLayout.ItemRole.FieldRole, self.spinBoxPeriod)
+
+        self.labelNumPoints = QLabel(self.groupBox)
+        self.labelNumPoints.setObjectName(u"labelNumPoints")
+
+        self.formLayout.setWidget(4, QFormLayout.ItemRole.LabelRole, self.labelNumPoints)
+
+        self.comboBoxNumPoints = QComboBox(self.groupBox)
+        self.comboBoxNumPoints.setObjectName(u"comboBoxNumPoints")
+
+        self.formLayout.setWidget(4, QFormLayout.ItemRole.FieldRole, self.comboBoxNumPoints)
+
+        self.labelWindow = QLabel(self.groupBox)
+        self.labelWindow.setObjectName(u"labelWindow")
+
+        self.formLayout.setWidget(5, QFormLayout.ItemRole.LabelRole, self.labelWindow)
+
+        self.comboBoxWindow = QComboBox(self.groupBox)
+        self.comboBoxWindow.setObjectName(u"comboBoxWindow")
+
+        self.formLayout.setWidget(5, QFormLayout.ItemRole.FieldRole, self.comboBoxWindow)
+
+        self.labelBeta = QLabel(self.groupBox)
+        self.labelBeta.setObjectName(u"labelBeta")
+
+        self.formLayout.setWidget(6, QFormLayout.ItemRole.LabelRole, self.labelBeta)
+
+        self.spinBoxAtten = QSpinBox(self.groupBox)
+        self.spinBoxAtten.setObjectName(u"spinBoxAtten")
+        self.spinBoxAtten.setValue(60)
+
+        self.formLayout.setWidget(6, QFormLayout.ItemRole.FieldRole, self.spinBoxAtten)
 
 
         self.verticalLayout.addLayout(self.formLayout)
@@ -142,6 +172,9 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.spinBoxPeriod.setToolTip("")
 #endif // QT_CONFIG(tooltip)
+        self.labelNumPoints.setText(QCoreApplication.translate("MainWindow", u"Number of Points", None))
+        self.labelWindow.setText(QCoreApplication.translate("MainWindow", u"Window", None))
+        self.labelBeta.setText(QCoreApplication.translate("MainWindow", u"Attenuation (dB)", None))
         self.pushButtonPlayPause.setText(QCoreApplication.translate("MainWindow", u"PushButton", None))
         self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"File", None))
     # retranslateUi
