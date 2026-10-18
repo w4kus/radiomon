@@ -80,7 +80,7 @@
              <item row="2" column="0">
               <widget class="QCheckBox" name="checkBoxGrid">
                <property name="text">
-                <string>Enable Gird</string>
+                <string>Enable Grid</string>
                </property>
               </widget>
              </item>

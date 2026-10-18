@@ -167,7 +167,7 @@ class Ui_MainWindow(object):
         self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Settings", None))
         self.labelGraph.setText(QCoreApplication.translate("MainWindow", u"Graph", None))
         self.labelDoman.setText(QCoreApplication.translate("MainWindow", u"Domain", None))
-        self.checkBoxGrid.setText(QCoreApplication.translate("MainWindow", u"Enable Gird", None))
+        self.checkBoxGrid.setText(QCoreApplication.translate("MainWindow", u"Enable Grid", None))
         self.labelPeriod.setText(QCoreApplication.translate("MainWindow", u"Sample Size(ms)", None))
 #if QT_CONFIG(tooltip)
         self.spinBoxPeriod.setToolTip("")
