@@ -11,11 +11,13 @@ import numpy as np
 import pyqtgraph as pg
 import scipy.fft
 import scipy.signal
-from PySide6.QtCore import Qt, Slot
+from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtWidgets import QApplication, QMainWindow
 
-import rm_zmq as rmzmq
-from ui_MainWindow import Ui_MainWindow
+from . import rm_zmq as rmzmq
+from .ui_MainWindow import Ui_MainWindow
+
+APP_VERSION:            Final = "1.0"
 
 GRAPH_CURVE:            Final = 0
 GRAPH_SCATTER:          Final = 1
@@ -46,6 +48,8 @@ DEFAULT_GRAPH:          Final = GRAPH_CURVE
 DEFAULT_POINTS:         Final = DFT_POINTS_1024
 DEFAULT_WINDOW:         Final = DFT_WINDOW_HANNING
 
+BLOCK_TIMEOUT:          Final = 1500
+
 # MainWindow
 class MainWindow(QMainWindow):
 
@@ -66,8 +70,10 @@ class MainWindow(QMainWindow):
         # Default DFT window
         self.currentDFTWindowIdx = DEFAULT_WINDOW
 
-        # Whether or not we're recieving sample blocks
-        self.receivingBlocks = True
+        # Block receive timeout
+        self.blockTimer = QTimer(self)
+        self.blockTimer.setInterval(BLOCK_TIMEOUT)
+        self.blockTimer.timeout.connect(lambda: self.ui.pushButtonPlayPause.setEnabled(False))
 
         ##################################
         # Set up the GUI
@@ -125,7 +131,7 @@ class MainWindow(QMainWindow):
         self.ui.pushButtonPlayPause.clicked.connect(self.playPauseClicked)
         self.ui.pushButtonPlayPause.setText(self.tr("Pause"))
         self.playPauseCount = np.uint8(0)
-        self.ui.pushButtonPlayPause.setEnabled(True)
+        self.ui.pushButtonPlayPause.setEnabled(False)
 
         # Sample size for frequency (DFT)
         self.ui.comboBoxNumPoints.addItems((self.tr("512"), self.tr("1024"), self.tr("2048"), self.tr("4096"), self.tr("8192")))
@@ -231,16 +237,19 @@ class MainWindow(QMainWindow):
     def recv(self, type: np.uint8, rate: np.uint32, samples: np.ndarray):
         # tick = time.perf_counter_ns()
 
-        # FIXME - handle receivingBlocks
-
         # NOTE We do not expect the sample type to change once the stream starts.
         self.currentSampleType = type
+
+        if self.ui.pushButtonPlayPause.isEnabled() is False:
+            self.ui.pushButtonPlayPause.setEnabled(True)
+
+        self.blockTimer.start()
 
         # Are we in the frequency domain? If so transform the samples using the DFT
         if self.domain == DOMAIN_FREQ:
             # Ignore blocks in the signal queue which are not the correct size
             if samples.size == self.dftPoints[self.currentDFTPoints]:
-                param = (self.windows[self.currentDFTWindowIdx], self.ui.spinBoxAtten.value()) \
+                param = (self.windows[self.currentDFTWindowIdx], scipy.signal.kaiser_beta(self.ui.spinBoxAtten.value())) \
                         if self.currentDFTWindowIdx == DFT_WINDOW_KAISER else self.windows[self.currentDFTWindowIdx]
 
                 samples = samples * scipy.signal.get_window(param, self.dftPoints[self.currentDFTPoints])
@@ -327,16 +336,17 @@ class MainWindow(QMainWindow):
 
     @Slot(bool)
     def playPauseClicked(self, checked: bool):
-        if self.receivingBlocks:
-            self.ui.pushButtonPlayPause.setEnabled(True)
-            self.playPauseCount += 1
+        self.ui.pushButtonPlayPause.setEnabled(True)
+        self.playPauseCount += 1
 
-            if self.playPauseCount & 1:
-                self.zmq.instance.samples_recv.disconnect(self.recv)
-                self.ui.pushButtonPlayPause.setText(self.tr("Play"))
-            else:
-                self.zmq.instance.samples_recv.connect(self.recv)
-                self.ui.pushButtonPlayPause.setText(self.tr("Pause"))
+        if self.playPauseCount & 1:
+            self.zmq.instance.samples_recv.disconnect(self.recv)
+            self.ui.pushButtonPlayPause.setText(self.tr("Play"))
+            self.blockTimer.stop()
+        else:
+            self.zmq.instance.samples_recv.connect(self.recv)
+            self.ui.pushButtonPlayPause.setText(self.tr("Pause"))
+            self.blockTimer.start()
 
     @Slot(int)
     def numPointsChanged(self, i:int):
@@ -344,12 +354,35 @@ class MainWindow(QMainWindow):
         self.zmq.instance.setFixedSampleSize(self.dftPoints[i])
 
 def main():
-    app = QApplication(sys.argv)
+    parser = argparse.ArgumentParser(description="radiomon graphing tool using the ZMQ library")
+
+    sock_str = f"The ZMQ socket in the form of 'ipc://<path_to_socket_file>'; Defaults to {DEFAULT_IPC_SOCKET}"
+    parser.add_argument("-s", "--socket", type=str, help=sock_str)
+
+    parser.add_argument("-v", "--version", action="store_true", help="Display the version and exit")
+    parser.add_help = True
+
+    args, qargs = parser.parse_known_args()
+
+    s = DEFAULT_IPC_SOCKET
+
+    if args.socket is not None:
+        if "ipc://" in args.socket:
+            s = args.socket
+        else:
+            print("Only IPC sockets are supported...aborting")
+            sys.exit(-1)
+
+    if args.version:
+        print(f"RmSignals version {APP_VERSION}")
+        sys.exit(0)
+
+    app = QApplication([sys.argv[0]] + qargs)
 
     screen = app.primaryScreen()
     print(f"Max screen WxH: {screen.availableSize().width()}, {screen.availableSize().height()}")
 
-    zmq = rmzmq.ZmqRM(DEFAULT_IPC_SOCKET, rmzmq.DEFAULT_SAMPLE_PERIOD)
+    zmq = rmzmq.ZmqRM(s, rmzmq.DEFAULT_SAMPLE_PERIOD)
 
     mw = MainWindow(zmq)
     mw.show()
