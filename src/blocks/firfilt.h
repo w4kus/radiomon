@@ -40,7 +40,7 @@ public:
     {
         block<B>::process = std::bind(&firfilter::filter, this, std::placeholders::_1, std::placeholders::_2);
         util::init_aligned_ptr<float>(m_Taps, taps.size(), taps.data());
-        util::init_aligned_ptr<T>(m_Taps, taps.size());
+        util::init_aligned_ptr<T>(m_State, taps.size());
     }
 
     //! Create an instance for filtering.
@@ -50,7 +50,7 @@ public:
     {
         block<B>::process = std::bind(&firfilter::filter, this, std::placeholders::_1, std::placeholders::_2);
         util::init_aligned_ptr<float>(m_Taps, taps.size(), taps.data());
-        util::init_aligned_ptr<T>(m_Taps, taps.size());
+        util::init_aligned_ptr<T>(m_State, taps.size());
     }
 
     //! Filter a segment of a signal.
