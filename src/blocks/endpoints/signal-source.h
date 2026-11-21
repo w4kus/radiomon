@@ -59,7 +59,7 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////////////
     //! External API
-    float gain() const
+    float gain()
     {
         return m_Sine.gain();
     }
@@ -70,7 +70,7 @@ public:
         m_Sine.setGain(gain);
     }
 
-    rate_t frequency() const
+    rate_t frequency()
     {
         return static_cast<rate_t>(rm_math::rps_to_hz(m_Sine.frequency(), m_SamplingRate));
     }
