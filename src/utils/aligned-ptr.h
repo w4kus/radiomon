@@ -273,6 +273,13 @@ public:
         del_ptr();
     }
 
+    //! Return the value of the last element in the contained buffer
+    //! This depends on the capacity of the buffer, not the number of elements (size).
+    T back() const
+    {
+        return m_Ptr[m_Capacity-1];
+    }
+
     //! Iterator which *should* support algorithms requiring random access.
     struct iterator
     {
