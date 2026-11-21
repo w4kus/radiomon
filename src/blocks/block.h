@@ -87,10 +87,10 @@ public:
 protected:
     //! \cond
 
+    block() { }
+
     block(block_type type) : m_SamplingRate { 0 },  m_BidirMode { BIDIR_NONE }, m_Type { type }
     { }
-
-    block() = delete;
 
     block(const block &) = delete;
     block& operator=(const block &) = delete;
