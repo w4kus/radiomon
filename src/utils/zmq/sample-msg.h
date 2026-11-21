@@ -43,9 +43,10 @@ void tobytes(const std::string &str, std::array<uint8_t, size> &bytes)
  * \tparam sock_type    The socket type to use. See *socket_ep_t* in context.h.
  * \tparam array_size   The size of the header array if used.
  *
- * \note This sets up an IPC (unix) socket which is currently not available on Windows. See the ZMQ
- * documentation for details. Adding TCP/UDP/etc.. should be trivial but it has not been tried and
- * tested yet.
+ * \note The tested scheme is an IPC socket which means the publisher and subscriber are on
+ * the same host; this is primary use case. IPC is currently not available on Windows. See the ZMQ
+ * documentation for details. TCP/IP, UDP, and other schemes have not been tested yet and will more
+ * than likely need some additions.
  */
 
 template<typename T, socket_ep_t sock_type, uint8_t array_size>
@@ -94,7 +95,7 @@ public:
         if (!m_Sock)
         {
             char endpoint[65];
-            uint8_t epStrSize = strlen(socketId) + strlen(ep_str);
+            uint8_t epStrSize = strlen(socketId);
 
             assert(epStrSize < sizeof(endpoint));
 
@@ -106,7 +107,7 @@ public:
             }
 #endif
             memset(endpoint, 0, sizeof(endpoint));
-            snprintf(endpoint, sizeof(endpoint) - 1, "%s%s", ep_str, socketId);
+            snprintf(endpoint, sizeof(endpoint) - 1, "%s", socketId);
 
             m_Sock = zmq_socket(get(), sock_type);
             assert(m_Sock);
@@ -144,7 +145,7 @@ public:
                 return false;
             }
 #endif
-            m_Trace.print(ID, "%s ipc socket at %s\n", (sock_type == PUB_EP) ? "PUB" : "SUB", endpoint);
+            m_Trace.print(ID, "%s socket at %s\n", (sock_type == PUB_EP) ? "PUB" : "SUB", endpoint);
         }
 
         return true;
@@ -272,8 +273,6 @@ private:
 
     std::array<uint8_t, array_size>   m_MsgHdr;
     sock_t                            m_Sock;
-
-    static constexpr char const *ep_str = "ipc:///tmp/radiomon_sock-";
 };
 
 }}

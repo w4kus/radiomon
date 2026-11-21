@@ -23,6 +23,6 @@ struct test_zmq_vars
     static constexpr std::array<uint8_t, arr_size> HDR { 0x0A, 0x0B, 0x0C, 0x0D };
 #endif
 
-    static constexpr char const *EPID = "zmq-test";
+    static constexpr char const *EPID = "ipc:///tmp/radiomon_sock-zmq-test";
 };
 
