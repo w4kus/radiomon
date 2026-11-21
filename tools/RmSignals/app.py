@@ -215,12 +215,15 @@ class MainWindow(QMainWindow):
             self.vb.setXRange(0.0, self.zmq.instance.period)
             self.bottomAxis.setLabel(self.tr("Time (ms)"))
         else:
-            if self.currentSampleType == rmzmq.SAMPLE_TYPE_CMPLX:
-                self.xArray = np.linspace(-np.pi, np.pi, num=sampleSize, dtype=np.float32)
-                self.vb.setXRange(-np.pi, np.pi)
-            else:
-                self.xArray = np.linspace(0, np.pi, num=sampleSize, dtype=np.float32)
-                self.vb.setXRange(0, np.pi)
+            self.xArray = np.linspace(-np.pi, np.pi, num=sampleSize, dtype=np.float32)
+            self.vb.setXRange(-np.pi, np.pi)
+
+            # if self.currentSampleType == rmzmq.SAMPLE_TYPE_CMPLX:
+            #    self.xArray = np.linspace(-np.pi, np.pi, num=sampleSize, dtype=np.float32)
+            #    self.vb.setXRange(-np.pi, np.pi)
+            #else:
+            #    self.xArray = np.linspace(0, np.pi, num=sampleSize, dtype=np.float32)
+            #    self.vb.setXRange(0, np.pi)
 
             self.bottomAxis.setLabel(self.tr("Frequency (radians/sample)"))
 
@@ -252,13 +255,14 @@ class MainWindow(QMainWindow):
                 param = (self.windows[self.currentDFTWindowIdx], scipy.signal.kaiser_beta(self.ui.spinBoxAtten.value())) \
                         if self.currentDFTWindowIdx == DFT_WINDOW_KAISER else self.windows[self.currentDFTWindowIdx]
 
-                samples = samples * scipy.signal.get_window(param, self.dftPoints[self.currentDFTPoints])
+                win = scipy.signal.get_window(param, self.dftPoints[self.currentDFTPoints])
+                samples = np.abs(scipy.fft.fftshift(scipy.fft.fft(samples * win, norm="forward") / win.mean())) # type: ignore
 
                 # Create a new 'samples' object overriding the passed in reference to 'samples'
-                if type == rmzmq.SAMPLE_TYPE_FLOAT:
-                    samples = np.abs(scipy.fft.rfft(samples, norm="forward")) # type: ignore
-                else:
-                    samples = np.abs(scipy.fft.fftshift(scipy.fft.fft(samples, norm="forward"))) # type: ignore
+                # if type == rmzmq.SAMPLE_TYPE_FLOAT:
+                #    samples = np.abs(scipy.fft.rfft(samples, norm="forward")) # type: ignore
+                # else:
+                #    samples = np.abs(scipy.fft.fftshift(scipy.fft.fft(samples, norm="forward"))) # type: ignore
             else:
                 return
 
@@ -356,7 +360,9 @@ class MainWindow(QMainWindow):
 def main():
     parser = argparse.ArgumentParser(description="radiomon graphing tool using the ZMQ library")
 
-    sock_str = f"The ZMQ socket in the form of 'ipc://<path_to_socket_file>'; Defaults to {DEFAULT_IPC_SOCKET}"
+    sock_str = f"The ZMQ socket in the form of '<scheme>://<path_to_ipc_file_or_host/path>'; Defaults to '{DEFAULT_IPC_SOCKET}'. "
+    sock_str += "Only the IPC scheme is verified to work with this version."
+
     parser.add_argument("-s", "--socket", type=str, help=sock_str)
 
     parser.add_argument("-v", "--version", action="store_true", help="Display the version and exit")
@@ -364,23 +370,20 @@ def main():
 
     args, qargs = parser.parse_known_args()
 
-    s = DEFAULT_IPC_SOCKET
-
-    if args.socket is not None:
-        if "ipc://" in args.socket:
-            s = args.socket
-        else:
-            print("Only IPC sockets are supported...aborting")
-            sys.exit(-1)
-
     if args.version:
         print(f"RmSignals version {APP_VERSION}")
         sys.exit(0)
+
+    s = DEFAULT_IPC_SOCKET
+
+    if args.socket is not None:
+        s = args.socket
 
     app = QApplication([sys.argv[0]] + qargs)
 
     screen = app.primaryScreen()
     print(f"Max screen WxH: {screen.availableSize().width()}, {screen.availableSize().height()}")
+    print(f"Using socket '{s}'")
 
     zmq = rmzmq.ZmqRM(s, rmzmq.DEFAULT_SAMPLE_PERIOD)
 
