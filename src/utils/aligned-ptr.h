@@ -391,7 +391,7 @@ private:
                 m_Ptr = nullptr;
             }
 
-            m_Size = 0;
+            m_Size = m_Capacity = 0;
         }
     }
 
