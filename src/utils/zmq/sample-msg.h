@@ -34,7 +34,7 @@ void tobytes(const std::string &str, std::array<uint8_t, size> &bytes)
         bytes[i] = str[i];
 }
 
-/*! \brief ZMQ Sample Bridge
+/*! \brief ZMQ Sample Message Bridge
  *
  * Uses the ZMQ sockets library to send or receive samples from an external process. The interface
  * is designed to be used by blocks but apps can use it as well.
@@ -43,10 +43,8 @@ void tobytes(const std::string &str, std::array<uint8_t, size> &bytes)
  * \tparam sock_type    The socket type to use. See *socket_ep_t* in context.h.
  * \tparam array_size   The size of the header array if used.
  *
- * \note The tested scheme is an IPC socket which means the publisher and subscriber are on
- * the same host; this is primary use case. IPC is currently not available on Windows. See the ZMQ
- * documentation for details. TCP/IP, UDP, and other schemes have not been tested yet and will more
- * than likely need some additions.
+ * \note This is primarily for streaming samples to the RmSignals app. See *sample-stream* for a
+ *       more generic streaming solution.
  */
 
 template<typename T, socket_ep_t sock_type, uint8_t array_size>
@@ -86,29 +84,14 @@ public:
     }
 
     //! Initialize and setup the socket.
-    //! @param [in] socketId  A string containing an id for the socket. The sender (publisher) and
-    //! receiver (subscriber) must use the same ID. It can be any printable character and is
-    //! limited to 64 characters.
+    //! @param [in] socketId  A string containing an id for the socket; e.g., "ipc:///tmp/radiomon_sock-zmq-test".
+    //!                       The IPC protocol is typically used for sending samples to
+    //!                       the RmSignals app since there's less overhead than TCP.
     //! @return *true* if successful, *false* otherwise. *errno* will contain the error code.
     bool init(const char *socketId)
     {
         if (!m_Sock)
         {
-            char endpoint[65];
-            uint8_t epStrSize = strlen(socketId);
-
-            assert(epStrSize < sizeof(endpoint));
-
-#ifdef NDEBUG
-            if (epStrSize >= sizeof(endpoint))
-            {
-                m_Trace.print(ID, "EP string overfloat\n");
-                return false;
-            }
-#endif
-            memset(endpoint, 0, sizeof(endpoint));
-            snprintf(endpoint, sizeof(endpoint) - 1, "%s", socketId);
-
             m_Sock = zmq_socket(get(), sock_type);
             assert(m_Sock);
 
@@ -120,6 +103,7 @@ public:
             }
 #endif
             int val = 0;
+
             // Don't linger when the term signal is sent
             zmq_setsockopt(m_Sock, ZMQ_LINGER, &val, sizeof(int));
 
@@ -127,12 +111,12 @@ public:
             {
                 assert(m_MsgHdr.size());
 
-                val = zmq_bind(m_Sock, endpoint);
+                val = zmq_bind(m_Sock, socketId);
                 checkInt(val, "zmq_bind");
             }
             else
             {
-                val = zmq_connect(m_Sock, endpoint);
+                val = zmq_connect(m_Sock, socketId);
                 checkInt(val, "zmq_connect");
 
                 zmq_setsockopt(m_Sock, ZMQ_SUBSCRIBE, m_MsgHdr.data(), m_MsgHdr.size());
@@ -145,7 +129,7 @@ public:
                 return false;
             }
 #endif
-            m_Trace.print(ID, "%s socket at %s\n", (sock_type == PUB_EP) ? "PUB" : "SUB", endpoint);
+            m_Trace.print(ID, "%s socket at %s\n", (sock_type == PUB_EP) ? "PUB" : "SUB", socketId);
         }
 
         return true;
@@ -201,7 +185,7 @@ public:
     //! @param [out] hdr      The received header bytes.
     //! @param [out] samples  The received block of samples if successful; undefined otherwise.
     //! @param [in]  block    If *true* this will block until samples are received.
-    //! @return Zero if successful, -1 otherwise. *errno* will contian the error code. If
+    //! @return Zero if successful, -1 otherwise. *errno* will contain the error code. If
     //! operating in non-blocking mode and there's no samples available, this will return
     //! -1 and *errno* will be set to *EAGAIN*.
     template<uint8_t hdr_array_size>
